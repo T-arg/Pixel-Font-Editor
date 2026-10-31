@@ -92,12 +92,12 @@ button kbd{background:transparent;color:inherit;border-color:currentColor;opacit
 <body>
 <header>
   {{LOGO}}
-  <h1>Pixel Font Editor <span style="color:#6b5f5e;font-weight:500">v1.6.0</span></h1>
+  <h1>Pixel Font Editor <span style="color:#6b5f5e;font-weight:500">v1.7.1</span></h1>
   <span class="sep"></span>
   <button id="btnUndo" class="ghost" title="Undo (Ctrl+Z)">↶</button><button id="btnRedo" class="ghost" title="Redo (Ctrl+Y)">↷</button>
   <button id="btnNew" class="ghost" title="Start a new font">New…</button><button id="btnOpen" class="ghost" title="Open a .atmfont project">Open…</button><button id="btnSave" class="ghost" title="Save the project as .atmfont (Ctrl+S)">Save</button>
   <span class="sep"></span>
-  <button id="btnImport" class="ghost" title="Import a .h font array, a PNG sheet or a TTF/OTF font (or drop it on the page)">Import…</button><button id="btnPng" class="ghost" title="Export all glyphs as a PNG sheet">Export PNG</button><button id="btnExport" class="play" title="Export the font as an Arduboy .h file">Export .h</button>
+  <button id="btnImport" class="ghost" title="Import a .h font array, a PNG sheet or a TTF/OTF font (or drop it on the page)">Import…</button><button id="btnPng" class="ghost" title="Export all glyphs as a PNG sheet">Export PNG</button><button id="btnTtf" class="ghost" title="Export a TrueType font (.ttf): white pixels become filled squares. Use it at a font size of exactly the font height (or a multiple) for crisp pixels">Export TTF</button><button id="btnExport" class="play" title="Export the font as an Arduboy .h file">Export .h</button>
   <a class="manual" id="btnHelp" href="#">? Help</a>
   <input id="fileOpen" type="file" accept=".atmfont,.json" hidden><input id="fileImport" type="file" accept=".h,.c,.cpp,.ino,.txt,.atmfont,.json,.ttf,.otf,.woff,.woff2,image/*" hidden>
   {{DONATE}}
@@ -372,6 +372,77 @@ function exportPNG(){
   for(let i=0;i<n;i++)drawGlyph(c,G(F.first+i),(i%per)*F.w,Math.floor(i/per)*F.h,1,'#fff','#000');
   cn.toBlob(b=>download(fname()+'_'+F.w+'x'+F.h+'.png',b),'image/png');
 }
+/* ---------- TTF export: every white pixel becomes a filled square (merged into rectangles) ---------- */
+function buildTTF(){
+  const P=100,H=F.h,W=F.w,UPM=H*P,codes=[];
+  for(let c=F.first;c<=F.last;c++)codes.push(c);
+  const u16=v=>[(v>>8)&255,v&255],u32=v=>[(v>>>24)&255,(v>>16)&255,(v>>8)&255,v&255],i16=v=>u16(v&0xFFFF);
+  const pad4=a=>{while(a.length&3)a.push(0);return a};
+  const glyphs=[];   // {rects, adv}
+  const rectsOf=g=>{ // horizontal runs, then merged vertically when identical
+    const runs=[];for(let y=0;y<H;y++){let x=0;while(x<W){if((g.rows[y]>>x)&1){let s=x;while(x<W&&((g.rows[y]>>x)&1))x++;runs.push({x0:s,x1:x,y0:y,y1:y+1})}else x++}}
+    const out=[];for(const r of runs){const p=out.find(o=>o.x0===r.x0&&o.x1===r.x1&&o.y1===r.y0);if(p)p.y1=r.y1;else out.push({...r})}return out};
+  glyphs.push({rects:[{x0:0,x1:W,y0:0,y1:H},{x0:1,x1:W-1,y0:1,y1:H-1}].slice(0,W>2&&H>2?2:1),adv:(W+1)*P,notdef:1});
+  for(const c of codes){const g=G(c);glyphs.push({rects:rectsOf(g),adv:Math.max(0,((F.prop?clamp(g.adv,0,W):W)+F.spacing)*P)})}
+  // glyf + loca
+  const glyf=[],loca=[0];let maxPts=0,maxCont=0,gxMin=1e9,gyMin=1e9,gxMax=-1e9,gyMax=-1e9;
+  for(const g of glyphs){
+    let b=[];
+    if(g.rects.length){
+      const xs=[],ys=[],ends=[];
+      const rc=g.rects.map(r=>({x0:r.x0*P,x1:r.x1*P,y0:(H-r.y1)*P,y1:(H-r.y0)*P}));
+      rc.forEach((r,i)=>{ // outer contour clockwise; notdef inner box counter-clockwise (hole)
+        const hole=g.notdef&&i===1;
+        const pts=hole?[[r.x0,r.y0],[r.x1,r.y0],[r.x1,r.y1],[r.x0,r.y1]]:[[r.x0,r.y0],[r.x0,r.y1],[r.x1,r.y1],[r.x1,r.y0]];
+        for(const p of pts){xs.push(p[0]);ys.push(p[1])}ends.push(xs.length-1)});
+      g.xMin=Math.min(...xs);g.xMax=Math.max(...xs);g.yMin=Math.min(...ys);g.yMax=Math.max(...ys);
+      b.push(...i16(ends.length),...i16(g.xMin),...i16(g.yMin),...i16(g.xMax),...i16(g.yMax));
+      for(const e of ends)b.push(...u16(e));b.push(0,0);
+      for(let i=0;i<xs.length;i++)b.push(1);
+      let px=0;for(const x of xs){b.push(...i16(x-px));px=x}
+      let py=0;for(const y of ys){b.push(...i16(y-py));py=y}
+      maxPts=Math.max(maxPts,xs.length);maxCont=Math.max(maxCont,ends.length);
+      gxMin=Math.min(gxMin,g.xMin);gyMin=Math.min(gyMin,g.yMin);gxMax=Math.max(gxMax,g.xMax);gyMax=Math.max(gyMax,g.yMax);
+    }else{g.xMin=0}
+    pad4(b);glyf.push(...b);loca.push(glyf.length)}
+  if(gxMin>gxMax){gxMin=gyMin=gxMax=gyMax=0}
+  const N=glyphs.length;
+  const locaT=[];loca.forEach(v=>locaT.push(...u32(v)));
+  const hmtx=[];glyphs.forEach(g=>hmtx.push(...u16(g.adv),...i16(g.xMin||0)));
+  // cmap format 4, one segment per character
+  const segs=codes.map((c,i)=>({c,gid:i+1}));const sc=segs.length+1;
+  let es=1,lg=0;while(es*2<=sc){es*=2;lg++}
+  const c4=[...u16(4),...u16(16+sc*8),...u16(0),...u16(sc*2),...u16(es*2),...u16(lg),...u16(sc*2-es*2)];
+  segs.forEach(s=>c4.push(...u16(s.c)));c4.push(...u16(0xFFFF));c4.push(...u16(0));
+  segs.forEach(s=>c4.push(...u16(s.c)));c4.push(...u16(0xFFFF));
+  segs.forEach(s=>c4.push(...u16((s.gid-s.c)&0xFFFF)));c4.push(...u16(1));
+  for(let i=0;i<sc;i++)c4.push(...u16(0));
+  const cmap=[...u16(0),...u16(1),...u16(3),...u16(1),...u32(12),...c4];
+  // name
+  const fam=(F.name||'PixelFont').replace(/[^\w ]+/g,'').trim()||'PixelFont',ps=fam.replace(/\s+/g,'')+'-Regular';
+  const strs=[[1,fam],[2,'Regular'],[3,fam+' '+Date.now()],[4,fam],[6,ps]];
+  const nm=[...u16(0),...u16(strs.length),...u16(6+strs.length*12)];let so=[];
+  for(const [id,s] of strs){const bytes=[];for(const ch of s)bytes.push(...u16(ch.charCodeAt(0)));nm.push(...u16(3),...u16(1),...u16(0x409),...u16(id),...u16(bytes.length),...u16(so.length));so.push(...bytes)}
+  const name=[...nm,...so];
+  const ts=Math.floor(Date.now()/1000)+2082844800,head=[...u32(0x00010000),...u32(0x00010000),...u32(0),...u32(0x5F0F3CF5),...u16(3),...u16(UPM),...u32(0),...u32(ts),...u32(0),...u32(ts),...i16(gxMin),...i16(gyMin),...i16(gxMax),...i16(gyMax),...u16(0),...u16(8),...i16(2),...i16(1),...i16(0)];
+  const lineGap=F.gap*P;
+  const hhea=[...u32(0x00010000),...i16(UPM),...i16(0),...i16(lineGap),...u16(Math.max(...glyphs.map(g=>g.adv))),...i16(0),...i16(0),...i16(gxMax),...i16(1),...i16(0),...i16(0),...i16(0),...i16(0),...i16(0),...i16(0),...i16(0),...u16(N)];
+  const maxp=[...u32(0x00010000),...u16(N),...u16(maxPts),...u16(maxCont),...u16(0),...u16(0),...u16(2),...u16(0),...u16(0),...u16(0),...u16(0),...u16(0),...u16(0),...u16(0),...u16(0)];
+  const avg=Math.round(glyphs.reduce((s,g)=>s+g.adv,0)/N);
+  const os2=[...u16(0),...i16(avg),...u16(400),...u16(5),...u16(0),...i16(UPM/2),...i16(UPM/2),...i16(0),...i16(UPM/4),...i16(UPM/2),...i16(UPM/2),...i16(0),...i16(UPM/2),...i16(P),...i16(UPM/3),...i16(0),...new Array(10).fill(0),...u32(1),...u32(0),...u32(0),...u32(0),65,82,71,32,...u16(0x40),...u16(Math.min(F.first,0xFFFF)),...u16(Math.min(F.last,0xFFFF)),...i16(UPM),...i16(0),...i16(lineGap),...u16(UPM),...u16(0)];
+  const post=[...u32(0x00030000),...u32(0),...i16(-P),...i16(P),...u32(1),...u32(0),...u32(0),...u32(0),...u32(0)];
+  const tabs=[['OS/2',os2],['cmap',cmap],['glyf',glyf],['head',head],['hhea',hhea],['hmtx',hmtx],['loca',locaT],['maxp',maxp],['name',name],['post',post]];
+  const sum=a=>{let s=0;for(let i=0;i<a.length;i+=4)s=(s+(((a[i]||0)<<24)>>>0)+((a[i+1]||0)<<16)+((a[i+2]||0)<<8)+(a[i+3]||0))>>>0;return s};
+  const out=[...u32(0x00010000),...u16(tabs.length),...u16(128),...u16(3),...u16(32)];
+  let off=12+tabs.length*16;const bodies=[];let headOff=0;
+  for(const [tag,d] of tabs){const t=d.slice();pad4(t);if(tag==='head')headOff=off;
+    out.push(...[...tag].map(ch=>ch.charCodeAt(0)),...u32(sum(t)),...u32(off),...u32(d.length));bodies.push(t);off+=t.length}
+  for(const t of bodies)for(let i=0;i<t.length;i++)out.push(t[i]);
+  const adj=(0xB1B0AFBA-sum(out))>>>0;const a=u32(adj);for(let i=0;i<4;i++)out[headOff+8+i]=a[i];
+  return new Uint8Array(out);
+}
+function exportTTF(){download(fname()+'.ttf',new Blob([buildTTF()],{type:'font/ttf'}))}
+
 function importImg(file){
   const img=new Image();img.onload=()=>{
     const cn=document.createElement('canvas');cn.width=img.width;cn.height=img.height;const c=cn.getContext('2d',{willReadFrequently:true});c.drawImage(img,0,0);const id=c.getImageData(0,0,img.width,img.height).data;
@@ -633,6 +704,7 @@ function helpDialog(){
    '<h3 style="margin-top:14px">Advance width</h3><p>The red line is where the glyph ends. With <b>Proportional</b> on, text uses each glyph’s advance width (use <i>Trim</i> to set it from the ink); otherwise every character is as wide as the cell.</p>'+
    '<h3>Import</h3><ul><li><b>.h</b> – any Arduboy sprite array (<code>width, height, frames…</code>), optionally with its <code>_mask</code> or <code>_plus_mask</code> data. Choose “sprite sheet” (one frame per glyph) or “column frames” like the ID-20 font. Fonts exported by this editor are recognised automatically.</li><li><b>PNG / JPG / GIF</b> – a sheet (white, black and transparent pixels, or dark letters on white) cut into equal cells (a file called <code>name_5x7.png</code> sets the cell size).</li><li><b>TTF / OTF / WOFF</b> – rasterised at the pixel size you choose.</li><li><b>.atmfont</b> – the project file.</li></ul>'+
    '<h3>Export for Arduboy</h3><ul><li><b>Sprite sheet</b> – one standard Sprites frame per glyph: <code>Sprites::drawSelfMasked(x, y, font, c - FONT_FIRST)</code>.</li><li><b>Column frames (ID-20 style)</b> – the font is a sprite sheet of <i>one-pixel-wide</i> frames. A 3×5 glyph costs only 3 bytes, blank glyphs share a single blank frame, and with the optional <i>charBox</i> a message is converted to frame numbers once, so drawing and scrolling it is cheap.</li><li><b>Mask</b>: “None” keeps only the white pixels (<code>drawSelfMasked</code>). To draw the black pixels as well, pick a separate mask array (<code>drawExternalMask</code>) or interleaved sprite + mask (<code>drawPlusMask</code>). Black pixels turn on automatically when the font has any.</li><li><b>Proportional</b> adds a width table (4 bits per glyph when all widths ≤ 15).</li><li>Use “only these characters” to keep just the glyphs your game needs.</li></ul>'+
+   '<h3>Other exports</h3><ul><li><b>Export PNG</b> – all glyphs as a sheet (white, black and transparent pixels), which can be re-imported.</li><li><b>Export TTF</b> – a TrueType font for use on a computer. Every white pixel becomes a filled square; black and transparent pixels stay empty (TrueType has no colours). Use it at a font size equal to the font height (or a multiple) for crisp pixels. Advance widths follow the letter gap and the Proportional setting; the line gap sets the line spacing.</li><li><b>Save (.atmfont)</b> – the project file. It can also be added to the <b>Text tool of the Sprite Editor</b> (press <kbd>T</kbd> there, then <i>Add font…</i>) to stamp text in your own font.</li></ul>'+
    '<p class="hint">Arduboy’s Sprites library has an 8-bit frame number, so a column font can hold at most 255 columns.</p>'+
    '<p class="hint">Made by TEAM a.r.g. – if this tool helps you, consider buying us a coffee ☕</p><div class="dfoot"><button class="play" id="hX">Close</button></div>');
   d.$('#hX').onclick=d.close;
@@ -649,7 +721,7 @@ function importFile(file){
 }
 $('#btnImport').onclick=()=>$('#fileImport').click();$('#fileImport').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importFile(f)};
 $('#btnOpen').onclick=()=>$('#fileOpen').click();$('#fileOpen').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)f.text().then(openProject)};
-$('#btnSave').onclick=saveProject;$('#btnPng').onclick=exportPNG;$('#btnExport').onclick=exportDialog;$('#btnNew').onclick=newDialog;
+$('#btnSave').onclick=saveProject;$('#btnPng').onclick=exportPNG;$('#btnTtf').onclick=exportTTF;$('#btnExport').onclick=exportDialog;$('#btnNew').onclick=newDialog;
 $('#btnHelp').onclick=e=>{e.preventDefault();helpDialog()};$('#btnUndo').onclick=undo;$('#btnRedo').onclick=redo;
 let dc=0;const drop=$('#drop');
 addEventListener('dragenter',e=>{if([...(e.dataTransfer.types||[])].includes('Files')){dc++;drop.style.display='flex'}});

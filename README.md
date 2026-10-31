@@ -9,7 +9,8 @@ A browser-based editor for small pixel fonts, made for the Arduboy by TEAM a.r.g
 - Cell size up to 24x24, any character range 0-255, per-glyph advance width (proportional fonts) with Trim.
 - Live 128x64 Arduboy preview of your own text.
 - Import: `.h` font arrays (sprite sheet or ID-20 style one-pixel-wide column frames, with optional `_mask` / `_plus_mask` data), PNG/JPG/GIF sheets, TTF/OTF/WOFF fonts (rasterised), `.atmfont` projects.
-- Export: Arduboy `.h` (sprite sheet or compact column frames, optional width table, optional "only these characters", `drawText()` helper and the ID-20 `charBox` ticker), PNG sheet, `.atmfont` project.
+- Export: Arduboy `.h` (sprite sheet or compact column frames, optional width table, optional "only these characters", `drawText()` helper and the ID-20 `charBox` ticker), PNG sheet, TrueType `.ttf` (white pixels become filled squares; use it at the font height or a multiple for crisp pixels), `.atmfont` project.
+- The `.atmfont` project file can be added to the Text tool of the Sprite Editor (press T, then *Add font…*).
 - Projects are autosaved in the browser.
 
 ## Arduboy formats
