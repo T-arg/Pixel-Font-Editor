@@ -39,7 +39,7 @@ input[type=checkbox],input[type=radio]{accent-color:#4a3b3a}
 .glist{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:4px}
 .gi{border:1px solid var(--line);border-radius:4px;background:#fff;cursor:pointer;text-align:center;padding:3px 0 1px;font:10px ui-monospace,monospace;color:var(--muted);min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:2px}
 .gi:hover{border-color:#4a3b3a}
-.gi canvas{display:block;image-rendering:pixelated;margin:auto}
+.gi canvas{display:block;image-rendering:pixelated;margin:auto;background:#bdb7b0}
 .gi.sel{border-color:#4a3b3a;box-shadow:inset 0 -3px 0 #f4d35e;color:var(--accent);font-weight:700}
 .gi.empty canvas{opacity:.3}
 .bar{display:flex;align-items:center;gap:6px;padding:5px 10px;border-bottom:1px solid var(--line);background:#f1efeb;flex-wrap:wrap}
@@ -72,6 +72,13 @@ a.manual:hover{background:#e8c443}
 .dlg .scroll{max-height:34vh;overflow:auto;border:1px solid var(--line);border-radius:4px;padding:4px;background:#fff}
 .drop{position:fixed;inset:0;background:rgba(244,211,94,.35);border:6px dashed #4a3b3a;z-index:60;display:none;align-items:center;justify-content:center;font-size:26px;color:#4a3b3a;font-weight:700;pointer-events:none}
 .help td{vertical-align:top;padding:2px 0}.help td:first-child{white-space:nowrap;padding-right:14px}
+button kbd{background:transparent;color:inherit;border-color:currentColor;opacity:.7;margin-left:5px}
+.swatches{display:flex;gap:6px;align-items:center}
+:root{--chk:repeating-conic-gradient(#d9d5cf 0% 25%,#f3f1ed 0% 50%) 0 0/8px 8px}
+.sw{width:28px;height:28px;border:2px solid #bbb;border-radius:4px;cursor:pointer;position:relative;padding:0;background:#fff}
+.sw:hover{background-color:inherit}.sw.b,.sw.b:hover{background:#000}.sw.w,.sw.w:hover{background:#fff}.sw.t,.sw.t:hover{background:var(--chk)}
+.sw.p{border-color:#4a3b3a;box-shadow:0 0 0 2px #f4d35e}.sw.s{border:2px dashed #4a3b3a}
+.sw span{position:absolute;right:1px;bottom:0;font-size:9px;font-weight:700;color:#c0392b;background:#fff;border-radius:2px;padding:0 2px}
 .big{font:700 34px/1 ui-monospace,monospace;color:var(--accent);min-width:34px;text-align:center}
 @media (max-width:1000px){body{height:auto;overflow:auto}.layout{grid-template-columns:1fr;display:block}.panel{border:0;border-bottom:1px solid var(--line)}.panel.main{height:80vh}}
 .bmc-slot{gap:10px}
@@ -85,7 +92,7 @@ a.manual:hover{background:#e8c443}
 <body>
 <header>
   {{LOGO}}
-  <h1>Pixel Font Editor <span style="color:#6b5f5e;font-weight:500">v1.0.0</span></h1>
+  <h1>Pixel Font Editor <span style="color:#6b5f5e;font-weight:500">v1.6.0</span></h1>
   <span class="sep"></span>
   <button id="btnUndo" class="ghost" title="Undo (Ctrl+Z)">↶</button><button id="btnRedo" class="ghost" title="Redo (Ctrl+Y)">↷</button>
   <button id="btnNew" class="ghost" title="Start a new font">New…</button><button id="btnOpen" class="ghost" title="Open a .atmfont project">Open…</button><button id="btnSave" class="ghost" title="Save the project as .atmfont (Ctrl+S)">Save</button>
@@ -100,20 +107,26 @@ a.manual:hover{background:#e8c443}
     <h2>Characters</h2>
     <div class="row"><select id="preset" class="light" title="Quickly set the character range"><option value="">Range preset…</option><option value="32,126">ASCII 32–126 (all printable)</option><option value="32,95">Space – _ (upper case, digits)</option><option value="48,90">0 – Z (digits + upper case)</option><option value="32,90">Space – Z</option><option value="32,255">32–255 (extended)</option></select></div>
     <div id="glist" class="glist"></div>
-    <p class="hint">Click a character, or just type it on the keyboard.</p>
+    <p class="hint">Click a character, or press <kbd>Shift</kbd>+letter (digits and symbols without Shift).</p>
   </aside>
   <section class="panel main">
     <div class="bar" id="bar">
-      <button class="ghost active" data-t="pencil" title="Draw (right mouse button erases)">✎ Pencil</button>
-      <button class="ghost" data-t="eraser">⌫ Eraser</button>
-      <button class="ghost" data-t="line">╱ Line</button>
-      <button class="ghost" data-t="rect">▭ Rect</button>
-      <button class="ghost" data-t="fill">▨ Fill</button>
+      <div class="swatches" id="swatches"><button class="sw b" data-c="0" title="Black pixel – click: left colour, right click: right colour (X swaps them)"></button><button class="sw w" data-c="1" title="White pixel"></button><button class="sw t" data-c="2" title="Transparent pixel"></button></div><span class="sep"></span>
+      <button class="ghost active" data-t="pencil" title="Draw with the left colour (right mouse button: right colour)">Pencil<kbd>B</kbd></button>
+      <button class="ghost" data-t="eraser" title="Paints transparent pixels">Eraser<kbd>E</kbd></button>
+      <button class="ghost" data-t="line">Line<kbd>L</kbd></button>
+      <button class="ghost" data-t="rect">Rect<kbd>R</kbd></button>
+      <button class="ghost" data-t="ellipse">Ellipse<kbd>O</kbd></button>
+      <button class="ghost" data-t="fill">Fill<kbd>G</kbd></button>
+      <button class="ghost" data-t="pick" title="Pick a colour from the glyph (left click: left colour, right click: right colour)">Picker<kbd>I</kbd></button>
+      <button class="ghost" data-t="select" title="Select an area">Select<kbd>M</kbd></button>
+      <button class="ghost" data-t="cut" title="Select an area, then drag inside it to move the pixels">Cut<kbd>U</kbd></button>
+      <button class="ghost" data-t="copy" title="Select an area, then drag inside it to copy the pixels">Copy<kbd>C</kbd></button>
       <label class="row chk" style="margin:0"><input type="checkbox" id="oFilled"> Filled</label>
       <span class="sep"></span>
       <button class="ghost sm" id="opL" title="Shift left (←)">◀</button><button class="ghost sm" id="opR" title="Shift right (→)">▶</button><button class="ghost sm" id="opU" title="Shift up (↑)">▲</button><button class="ghost sm" id="opD" title="Shift down (↓)">▼</button>
       <button class="ghost sm" id="opFH" title="Flip horizontally">⇋</button><button class="ghost sm" id="opFV" title="Flip vertically">⇅</button><button class="ghost sm" id="opInv" title="Invert pixels">Invert</button><button class="ghost sm" id="opClr" title="Clear glyph">Clear</button>
-      <button class="ghost sm" id="opCopy" title="Copy glyph (Ctrl+C)">Copy</button><button class="ghost sm" id="opPaste" title="Paste glyph (Ctrl+V)">Paste</button>
+      <button class="ghost sm" id="opCopy" title="Copy the selection, or the whole glyph (Ctrl+C)">Copy</button><button class="ghost sm" id="opPaste" title="Paste (Ctrl+V)">Paste</button>
       <label class="row chk" style="margin:0" title="Shift / flip / invert apply to every glyph"><input type="checkbox" id="oAll"> all glyphs</label>
       <span class="sep"></span>
       <label class="row chk" style="margin:0">Zoom <input type="range" id="zoomR" min="6" max="64" value="28"></label>
@@ -125,7 +138,7 @@ a.manual:hover{background:#e8c443}
         <b style="color:var(--accent)">Preview <span class="hint" style="font-weight:400">(Arduboy 128×64)</span></b>
         <textarea id="pvText" spellcheck="false"></textarea>
         <div class="row" style="margin:0"><label style="min-width:0">Zoom</label><select id="pvZoom" class="light"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>8</option></select>
-        <label class="chk row" style="min-width:0;margin:0 0 0 6px"><input type="checkbox" id="pvInv"> inverted</label></div>
+        <select id="pvBg" class="light" title="Preview background" style="margin-left:6px"><option value="dither" selected>dither bg</option><option value="black">black bg</option><option value="white">white bg</option></select></div>
       </div>
       <div class="pvwrap"><canvas id="pv"></canvas></div>
     </div>
@@ -136,7 +149,7 @@ a.manual:hover{background:#e8c443}
     <div class="row"><label>Cell size</label><input type="number" id="fW" min="1" max="24"> × <input type="number" id="fH" min="1" max="24"></div>
     <div class="row"><label>First char</label><input type="number" id="fFirst" min="0" max="255"> <span class="hint" id="fFirstCh"></span></div>
     <div class="row"><label>Last char</label><input type="number" id="fLast" min="0" max="255"> <span class="hint" id="fLastCh"></span></div>
-    <div class="row"><label>Letter gap</label><input type="number" id="fSpacing" min="0" max="8"> <span class="hint">px</span></div>
+    <div class="row"><label>Letter gap</label><input type="number" id="fSpacing" min="-8" max="8" title="Negative values squeeze the letters together"> <span class="hint">px (can be negative)</span></div>
     <div class="row"><label>Line gap</label><input type="number" id="fGap" min="0" max="16"> <span class="hint">px</span></div>
     <div class="row"><label class="chk"><input type="checkbox" id="fProp"> Proportional (use each glyph's advance width)</label></div>
     <h2>Glyph</h2>
@@ -159,21 +172,24 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const MAXD=24;
 const DEFAULT_FONT=/*DEFAULT_FONT*/null;
 const SAMPLE='ESCAPER DROID 0123456789\nACCESS DENIED: USE WHITE CARD\nTHE EXIT IS THAT WAY ====>\nThe quick brown fox jumps over\nthe lazy dog. {}[]()<>?!-+*/';
-let F, sel=65, hist=[], redoS=[], tool='pencil', clip=null, pre=null, drag=null, saveT=0, listSig='';
+let c1=1,c2=2,F, sel=65, hist=[], redoS=[], tool='pencil', clip=null, pre=null, drag=null, saveT=0, listSig='';
 
 /* ---------- model ---------- */
 function newFont(o){return {name:o.name||'myfont',w:o.w,h:o.h,first:o.first,last:o.last,spacing:o.spacing==null?1:o.spacing,gap:o.gap==null?1:o.gap,prop:!!o.prop,glyphs:{}}}
-function blank(){return {rows:new Array(F.h).fill(0),adv:F.w}}
+function blank(){return {rows:new Array(F.h).fill(0),m:new Array(F.h).fill(0),adv:F.w}}
 function G(c){let g=F.glyphs[c];if(!g){g=blank();F.glyphs[c]=g}return g}
-const get=(g,x,y)=>x<0||y<0||x>=F.w||y>=F.h?0:(g.rows[y]>>x)&1;
-const set=(g,x,y,v)=>{if(x<0||y<0||x>=F.w||y>=F.h)return;if(v)g.rows[y]|=1<<x;else g.rows[y]&=~(1<<x)};
-const isEmpty=g=>g.rows.every(r=>!r);
-const inkRight=g=>{let m=-1;for(let y=0;y<F.h;y++)for(let x=F.w-1;x>m;x--)if((g.rows[y]>>x)&1){m=x;break}return m};
+// pixel states: 0 black, 1 white, 2 transparent.  rows = white bits (image), m = opaque bits (mask, includes white)
+const px=(g,x,y)=>x<0||y<0||x>=F.w||y>=F.h?2:(((g.m[y]>>x)&1)?((g.rows[y]>>x)&1):2);
+const setPx=(g,x,y,v)=>{if(x<0||y<0||x>=F.w||y>=F.h)return;const b=1<<x;if(v===2){g.rows[y]&=~b;g.m[y]&=~b}else{g.m[y]|=b;if(v)g.rows[y]|=b;else g.rows[y]&=~b}};
+const get=px,set=setPx;
+const isEmpty=g=>g.m.every(r=>!r);
+const hasBlack=g=>g.m.some((r,y)=>r&~g.rows[y]);
+const inkRight=g=>{let m=-1;for(let y=0;y<F.h;y++)for(let x=F.w-1;x>m;x--)if((g.m[y]>>x)&1){m=x;break}return m};
 function sanitize(o){
   const w=clamp(o.w|0,1,MAXD),h=clamp(o.h|0,1,MAXD);let a=clamp(o.first|0,0,255),b=clamp(o.last|0,0,255);if(a>b)[a,b]=[b,a];
-  const f=newFont({name:String(o.name||'font').slice(0,40),w,h,first:a,last:b,spacing:clamp(o.spacing|0,0,8),gap:clamp(o.gap|0,0,16),prop:o.prop});
+  const f=newFont({name:String(o.name||'font').slice(0,40),w,h,first:a,last:b,spacing:clamp(o.spacing|0,-8,8),gap:clamp(o.gap|0,0,16),prop:o.prop});
   const mask=(1<<w)-1;
-  for(const k in (o.glyphs||{})){const c=+k;if(!(c>=0&&c<=255))continue;const s=o.glyphs[k];const rows=[];for(let y=0;y<h;y++)rows.push(((s.rows&&s.rows[y])|0)&mask);f.glyphs[c]={rows,adv:clamp(s.adv==null?w:s.adv|0,0,w)}}
+  for(const k in (o.glyphs||{})){const c=+k;if(!(c>=0&&c<=255))continue;const s=o.glyphs[k];const rows=[],mk=[];for(let y=0;y<h;y++){const r=((s.rows&&s.rows[y])|0)&mask;rows.push(r);mk.push((s.m?((s.m[y]|0)&mask):r)|r)}f.glyphs[c]={rows,m:mk,adv:clamp(s.adv==null?w:s.adv|0,0,w)}}
   return f;
 }
 const chLabel=c=>c===32?'␠':c>32&&c<127||c>160?String.fromCharCode(c):'#'+c;
@@ -183,20 +199,21 @@ const chName=c=>c===32?'space':c>32&&c<127||c>160?String.fromCharCode(c):'0x'+c.
 function begin(){if(pre===null)pre=JSON.stringify(F)}
 function end(){if(pre===null)return;const now=JSON.stringify(F);if(now!==pre){hist.push(pre);if(hist.length>200)hist.shift();redoS=[]}pre=null;renderAll()}
 function edit(fn){begin();fn();end()}
-function undo(){if(!hist.length)return;redoS.push(JSON.stringify(F));F=JSON.parse(hist.pop());fixSel();renderAll()}
-function redo(){if(!redoS.length)return;hist.push(JSON.stringify(F));F=JSON.parse(redoS.pop());fixSel();renderAll()}
+function undo(){selRect=null;if(!hist.length)return;redoS.push(JSON.stringify(F));F=JSON.parse(hist.pop());fixSel();renderAll()}
+function redo(){selRect=null;if(!redoS.length)return;hist.push(JSON.stringify(F));F=JSON.parse(redoS.pop());fixSel();renderAll()}
 function fixSel(){sel=clamp(sel,F.first,F.last)}
 
 /* ---------- rendering ---------- */
 const cv=$('#cv'),cx=cv.getContext('2d'),zoomR=$('#zoomR');
-function drawGlyph(ctx,g,ox,oy,s,fg){ctx.fillStyle=fg;for(let y=0;y<F.h;y++){const r=g.rows[y];if(!r)continue;for(let x=0;x<F.w;x++)if((r>>x)&1)ctx.fillRect(ox+x*s,oy+y*s,s,s)}}
+function drawGlyph(ctx,g,ox,oy,s,cw,cb){for(let y=0;y<F.h;y++){const m=g.m[y];if(!m)continue;for(let x=0;x<F.w;x++)if((m>>x)&1){ctx.fillStyle=((g.rows[y]>>x)&1)?cw:cb;ctx.fillRect(ox+x*s,oy+y*s,s,s)}}}
 function drawMain(){
   const g=G(sel),z=+zoomR.value;cv.width=F.w*z;cv.height=F.h*z;
-  cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
-  if(g.adv<F.w){cx.fillStyle='#f3e4e1';cx.fillRect(g.adv*z,0,(F.w-g.adv)*z,cv.height)}
-  drawGlyph(cx,g,0,0,z,'#2e2424');
-  if($('#oGrid').checked&&z>=6){cx.strokeStyle='#ddd6cf';cx.lineWidth=1;cx.beginPath();for(let x=1;x<F.w;x++){cx.moveTo(x*z+.5,0);cx.lineTo(x*z+.5,cv.height)}for(let y=1;y<F.h;y++){cx.moveTo(0,y*z+.5);cx.lineTo(cv.width,y*z+.5)}cx.stroke()}
+  for(let y=0;y<F.h;y++)for(let x=0;x<F.w;x++){const v=px(g,x,y);cx.fillStyle=v===2?(((x+y)&1)?'#d9d5cf':'#f3f1ed'):v?'#fff':'#000';cx.fillRect(x*z,y*z,z,z);
+    if(v===1&&z>=8){cx.strokeStyle='#cfc9c2';cx.lineWidth=1;cx.strokeRect(x*z+.5,y*z+.5,z-1,z-1)}}
+  if(g.adv<F.w){cx.fillStyle='rgba(192,57,43,.14)';cx.fillRect(g.adv*z,0,(F.w-g.adv)*z,cv.height)}
+  if($('#oGrid').checked&&z>=6){cx.strokeStyle='rgba(120,110,100,.45)';cx.lineWidth=1;cx.beginPath();for(let x=1;x<F.w;x++){cx.moveTo(x*z+.5,0);cx.lineTo(x*z+.5,cv.height)}for(let y=1;y<F.h;y++){cx.moveTo(0,y*z+.5);cx.lineTo(cv.width,y*z+.5)}cx.stroke()}
   cx.strokeStyle='#c0392b';cx.lineWidth=2;cx.beginPath();cx.moveTo(g.adv*z,0);cx.lineTo(g.adv*z,cv.height);cx.stroke();
+  if(selRect){const x=selRect.x0*z+1,y=selRect.y0*z+1,w=(selRect.x1-selRect.x0+1)*z-2,h=(selRect.y1-selRect.y0+1)*z-2;cx.lineWidth=2;cx.setLineDash([5,4]);cx.strokeStyle='#f4d35e';cx.strokeRect(x,y,w,h);cx.lineDashOffset=4.5;cx.strokeStyle='#4a3b3a';cx.strokeRect(x,y,w,h);cx.setLineDash([]);cx.lineDashOffset=0}
 }
 function thumbScale(){return clamp(Math.floor(32/Math.max(F.w,F.h)),1,6)}
 function buildList(){
@@ -206,22 +223,25 @@ function buildList(){
 }
 function drawList(){
   const s=thumbScale();
-  for(const d of $('#glist').children){const c=+d.dataset.c,g=F.glyphs[c]||blank();const cn=d.firstChild,ctx=cn.getContext('2d');ctx.clearRect(0,0,cn.width,cn.height);drawGlyph(ctx,g,0,0,s,'#2e2424');d.classList.toggle('sel',c===sel);d.classList.toggle('empty',isEmpty(g))}
+  for(const d of $('#glist').children){const c=+d.dataset.c,g=F.glyphs[c]||blank();const cn=d.firstChild,ctx=cn.getContext('2d');ctx.clearRect(0,0,cn.width,cn.height);drawGlyph(ctx,g,0,0,s,'#fff','#000');d.classList.toggle('sel',c===sel);d.classList.toggle('empty',isEmpty(g))}
 }
 const pc=c=>(c<F.first||c>F.last||!F.glyphs[c])&&c>=97&&c<=122&&c-32>=F.first&&c-32<=F.last?c-32:c; // preview only: lower case falls back to the capital
 const adv=c=>{c=pc(c);if(c<F.first||c>F.last)return F.prop?Math.max(1,F.w>>1):F.w;const g=F.glyphs[c];return F.prop?(g?g.adv:F.w):F.w};
 function renderPreview(){
   const s=+$('#pvZoom').value,W=128,H=64,cn=$('#pv'),ctx=cn.getContext('2d');cn.width=W*s;cn.height=H*s;
-  const inv=$('#pvInv').checked,bg=inv?'#f4f6ff':'#000',fg=inv?'#000':'#f4f6ff';ctx.fillStyle=bg;ctx.fillRect(0,0,cn.width,cn.height);
+  const bgm=$('#pvBg').value;ctx.fillStyle=bgm==='white'?'#fff':'#000';ctx.fillRect(0,0,cn.width,cn.height);if(bgm==='dither'){ctx.fillStyle='#fff';for(let y=0;y<H;y++)for(let x=(y&1);x<W;x+=2)ctx.fillRect(x*s,y*s,s,s)}
   const wid=t=>{let w=0;for(const ch of t)w+=adv(ch.charCodeAt(0))+F.spacing;return w-F.spacing};
   const lines=[];for(const para of $('#pvText').value.split('\n')){let line='';for(const w of para.split(' ')){const t=line?line+' '+w:w;if(!line||wid(t)<=W)line=t;else{lines.push(line);line=w}}lines.push(line)}
-  let y=0;for(const ln of lines){if(y>=H)break;let x=0;for(const ch of ln){const c=ch.charCodeAt(0),m=pc(c);if(m>=F.first&&m<=F.last&&F.glyphs[m])drawGlyph(ctx,{rows:F.glyphs[m].rows},x*s,y*s,s,fg);x+=adv(c)+F.spacing}y+=F.h+F.gap}
+  let y=0;for(const ln of lines){if(y>=H)break;let x=0;const it=[];for(const ch of ln){const c=ch.charCodeAt(0),m=pc(c);if(m>=F.first&&m<=F.last&&F.glyphs[m])it.push([F.glyphs[m],x]);x+=adv(c)+F.spacing}
+    for(let k=it.length-1;k>=0;k--)drawGlyph(ctx,it[k][0],it[k][1]*s,y*s,s,'#fff','#000');   // last letter first: with a negative gap every letter ends up on top of the next one
+    y+=F.h+F.gap}
 }
 function syncUI(){
   $('#fName').value=F.name;$('#fW').value=F.w;$('#fH').value=F.h;$('#fFirst').value=F.first;$('#fLast').value=F.last;$('#fSpacing').value=F.spacing;$('#fGap').value=F.gap;$('#fProp').checked=F.prop;
   $('#fFirstCh').textContent='= '+chName(F.first);$('#fLastCh').textContent='= '+chName(F.last);
   const g=G(sel);$('#gBig').textContent=chLabel(sel);$('#gCode').textContent='code '+sel+' · 0x'+sel.toString(16).toUpperCase();
-  const ink=g.rows.reduce((a,r)=>a+r.toString(2).replace(/0/g,'').length,0);$('#gInk').textContent=ink+' pixel'+(ink===1?'':'s');
+  const cnt=a=>a.reduce((n,r)=>n+r.toString(2).replace(/0/g,'').length,0),wh=cnt(g.rows),bl=cnt(g.m)-wh;$('#gInk').textContent=wh+' white, '+bl+' black px';
+  renderSw();
   $('#gAdv').max=F.w;$('#gAdv').value=g.adv;$('#btnUndo').disabled=!hist.length;$('#btnRedo').disabled=!redoS.length;
   const z=$('#zoomR');
   const o=defaultAO();const a=genArduboy(Object.assign(o,{fmt:'sheet'})),b=genArduboy(Object.assign(defaultAO(),{fmt:'cols'}));
@@ -234,63 +254,91 @@ function autosave(){try{localStorage.setItem('atmfont.autosave',JSON.stringify({
 function cellAt(e,clampIt){const r=cv.getBoundingClientRect();let x=Math.floor((e.clientX-r.left)/r.width*F.w),y=Math.floor((e.clientY-r.top)/r.height*F.h);if(clampIt){x=clamp(x,0,F.w-1);y=clamp(y,0,F.h-1)}else if(x<0||y<0||x>=F.w||y>=F.h)return null;return {x,y}}
 function lineFn(x0,y0,x1,y1,fn){const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let err=dx+dy;for(;;){fn(x0,y0);if(x0===x1&&y0===y1)break;const e2=2*err;if(e2>=dy){err+=dy;x0+=sx}if(e2<=dx){err+=dx;y0+=sy}}}
 function flood(g,x,y,v){const t=get(g,x,y);if(t===v)return;const st=[[x,y]];while(st.length){const [px,py]=st.pop();if(px<0||py<0||px>=F.w||py>=F.h||get(g,px,py)!==t)continue;set(g,px,py,v);st.push([px+1,py],[px-1,py],[px,py+1],[px,py-1])}}
+let selRect=null;
+const rectOf=(a,b)=>({x0:Math.min(a.x,b.x),y0:Math.min(a.y,b.y),x1:Math.max(a.x,b.x),y1:Math.max(a.y,b.y)});
+const inSel=p=>selRect&&p.x>=selRect.x0&&p.x<=selRect.x1&&p.y>=selRect.y0&&p.y<=selRect.y1;
+const snapG=g=>({rows:g.rows.slice(),m:g.m.slice()});
+function grab(g,r){const w=r.x1-r.x0+1,h=r.y1-r.y0+1,st=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++)st.push(px(g,r.x0+x,r.y0+y));return {w,h,st}}
+function putClip(g,c,ox,oy,all){for(let y=0;y<c.h;y++)for(let x=0;x<c.w;x++){const v=c.st[y*c.w+x];if(all||v!==2)setPx(g,ox+x,oy+y,v)}}
+function clearRect(g,r){for(let y=r.y0;y<=r.y1;y++)for(let x=r.x0;x<=r.x1;x++)setPx(g,x,y,2)}
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('pointerdown',e=>{
-  const p=cellAt(e);if(!p)return;e.preventDefault();cv.setPointerCapture(e.pointerId);begin();
-  const g=G(sel),v=(e.button===2||tool==='eraser')?0:1;drag={tool,v,start:p,last:p,base:g.rows.slice()};
+  const p=cellAt(e);if(!p)return;e.preventDefault();const g=G(sel);
+  if(tool==='pick'){const v=px(g,p.x,p.y);if(e.button===2)c2=v;else c1=v;renderSw();return}
+  cv.setPointerCapture(e.pointerId);
+  if(tool==='select'||tool==='cut'||tool==='copy'){
+    if(tool!=='select'&&selRect&&inSel(p)){begin();drag={tool,mode:'move',start:p,last:p,base:snapG(g),clip:grab(g,selRect),sel0:Object.assign({},selRect)};return}
+    selRect={x0:p.x,y0:p.y,x1:p.x,y1:p.y};drag={tool,mode:'sel',start:p,last:p};drawMain();return;
+  }
+  begin();
+  const v=tool==='eraser'?2:(e.button===2?c2:c1);drag={tool,v,start:p,last:p,base:snapG(g)};
   if(tool==='fill'){flood(g,p.x,p.y,v);drag=null;cv.releasePointerCapture(e.pointerId);end();return}
-  if(tool==='pencil'||tool==='eraser')set(g,p.x,p.y,v);else shape(g,p);
+  if(tool==='pencil'||tool==='eraser')setPx(g,p.x,p.y,v);else shape(g,p);
   drawMain();
 });
 cv.addEventListener('pointermove',e=>{
   if(!drag)return;const p=cellAt(e,true),g=G(sel);if(p.x===drag.last.x&&p.y===drag.last.y)return;
-  if(drag.tool==='pencil'||drag.tool==='eraser')lineFn(drag.last.x,drag.last.y,p.x,p.y,(x,y)=>set(g,x,y,drag.v));else shape(g,p);
+  if(drag.mode==='sel'){selRect=rectOf(drag.start,p)}
+  else if(drag.mode==='move'){const dx=p.x-drag.start.x,dy=p.y-drag.start.y;g.rows=drag.base.rows.slice();g.m=drag.base.m.slice();if(drag.tool==='cut')clearRect(g,drag.sel0);
+    putClip(g,drag.clip,drag.sel0.x0+dx,drag.sel0.y0+dy,false);selRect={x0:drag.sel0.x0+dx,y0:drag.sel0.y0+dy,x1:drag.sel0.x1+dx,y1:drag.sel0.y1+dy}}
+  else if(drag.tool==='pencil'||drag.tool==='eraser')lineFn(drag.last.x,drag.last.y,p.x,p.y,(x,y)=>setPx(g,x,y,drag.v));else shape(g,p);
   drag.last=p;drawMain();
 });
 function shape(g,p){
-  g.rows=drag.base.slice();const a=drag.start;
-  if(drag.tool==='line')lineFn(a.x,a.y,p.x,p.y,(x,y)=>set(g,x,y,drag.v));
-  else{const x0=Math.min(a.x,p.x),x1=Math.max(a.x,p.x),y0=Math.min(a.y,p.y),y1=Math.max(a.y,p.y),f=$('#oFilled').checked;for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(f||x===x0||x===x1||y===y0||y===y1)set(g,x,y,drag.v)}
+  g.rows=drag.base.rows.slice();g.m=drag.base.m.slice();const a=drag.start;
+  if(drag.tool==='line')lineFn(a.x,a.y,p.x,p.y,(x,y)=>setPx(g,x,y,drag.v));
+  else if(drag.tool==='ellipse'){const r=rectOf(a,p),f=$('#oFilled').checked,cx=(r.x0+r.x1)/2,cy=(r.y0+r.y1)/2,rx=(r.x1-r.x0+1)/2,ry=(r.y1-r.y0+1)/2;
+    const inE=(x,y)=>{const dx=(x-cx)/rx,dy=(y-cy)/ry;return dx*dx+dy*dy<=1};
+    for(let y=r.y0;y<=r.y1;y++)for(let x=r.x0;x<=r.x1;x++)if(inE(x,y)&&(f||!(inE(x-1,y)&&inE(x+1,y)&&inE(x,y-1)&&inE(x,y+1))))setPx(g,x,y,drag.v)}
+  else{const r=rectOf(a,p),f=$('#oFilled').checked;for(let y=r.y0;y<=r.y1;y++)for(let x=r.x0;x<=r.x1;x++)if(f||x===r.x0||x===r.x1||y===r.y0||y===r.y1)setPx(g,x,y,drag.v)}
 }
-const endDrag=()=>{if(drag){drag=null;end()}};
+const endDrag=()=>{if(drag){const d=drag;drag=null;if(d.mode==='sel')drawMain();else end()}};
 cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
-$('#bar').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;tool=b.dataset.t;document.querySelectorAll('#bar [data-t]').forEach(x=>x.classList.toggle('active',x===b))});
+function renderSw(){document.querySelectorAll('#swatches .sw').forEach(b=>{const c=+b.dataset.c;b.classList.toggle('p',c===c1);b.classList.toggle('s',c===c2);b.innerHTML=(c===c1?'<span>L</span>':'')+(c===c2?'<span style="right:auto;left:1px">R</span>':'')})}
+document.querySelectorAll('#swatches .sw').forEach(b=>{const c=+b.dataset.c;b.onclick=()=>{c1=c;renderSw()};b.oncontextmenu=e=>{e.preventDefault();c2=c;renderSw()}});
+function setTool(t){tool=t;document.querySelectorAll('#bar [data-t]').forEach(x=>x.classList.toggle('active',x.dataset.t===t))}
+$('#bar').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(b)setTool(b.dataset.t)});
 
 /* ---------- glyph operations ---------- */
 const targets=()=>{if(!$('#oAll').checked)return [sel];const a=[];for(let c=F.first;c<=F.last;c++)a.push(c);return a};
 function eachGlyph(fn){edit(()=>{for(const c of targets())fn(G(c))})}
-function shift(dx,dy){eachGlyph(g=>{const n=new Array(F.h).fill(0);for(let y=0;y<F.h;y++)for(let x=0;x<F.w;x++)if(get(g,x-dx,y-dy))n[y]|=1<<x;g.rows=n})}
+function shift(dx,dy){eachGlyph(g=>{const n={rows:new Array(F.h).fill(0),m:new Array(F.h).fill(0)};for(let y=0;y<F.h;y++)for(let x=0;x<F.w;x++)setPx(n,x,y,px(g,x-dx,y-dy));g.rows=n.rows;g.m=n.m})}
 $('#opL').onclick=()=>shift(-1,0);$('#opR').onclick=()=>shift(1,0);$('#opU').onclick=()=>shift(0,-1);$('#opD').onclick=()=>shift(0,1);
-$('#opFH').onclick=()=>eachGlyph(g=>{g.rows=g.rows.map(r=>{let n=0;for(let x=0;x<F.w;x++)if((r>>x)&1)n|=1<<(F.w-1-x);return n})});
-$('#opFV').onclick=()=>eachGlyph(g=>{g.rows.reverse()});
-$('#opInv').onclick=()=>eachGlyph(g=>{const m=(1<<F.w)-1;g.rows=g.rows.map(r=>~r&m)});
-$('#opClr').onclick=()=>edit(()=>{G(sel).rows.fill(0)});
-function copyG(){const g=G(sel);clip={rows:g.rows.slice(),adv:g.adv,w:F.w,h:F.h};toast('Glyph copied')}
-function pasteG(){if(!clip)return toast('Nothing copied yet');edit(()=>{const g=G(sel),m=(1<<F.w)-1;g.rows=new Array(F.h).fill(0).map((_,y)=>(clip.rows[y]||0)&m);g.adv=Math.min(clip.adv,F.w)})}
-$('#opCopy').onclick=copyG;$('#opPaste').onclick=pasteG;
+const rev=r=>{let n=0;for(let x=0;x<F.w;x++)if((r>>x)&1)n|=1<<(F.w-1-x);return n};
+$('#opFH').onclick=()=>eachGlyph(g=>{g.rows=g.rows.map(rev);g.m=g.m.map(rev)});
+$('#opFV').onclick=()=>eachGlyph(g=>{g.rows.reverse();g.m.reverse()});
+$('#opInv').onclick=()=>eachGlyph(g=>{g.rows=g.rows.map((r,y)=>g.m[y]&~r)});
+$('#opClr').onclick=()=>edit(()=>{const g=G(sel);g.rows.fill(0);g.m.fill(0)});
+function copySel(){const g=G(sel);if(selRect){clip=Object.assign(grab(g,selRect),{whole:false});toast('Selection copied')}else{clip=Object.assign(grab(g,{x0:0,y0:0,x1:F.w-1,y1:F.h-1}),{whole:true,adv:g.adv});toast('Glyph copied')}}
+function cutSel(){if(!selRect)return;copySel();const r=Object.assign({},selRect);edit(()=>clearRect(G(sel),r))}
+function delSel(){if(!selRect)return;const r=Object.assign({},selRect);edit(()=>clearRect(G(sel),r))}
+function pasteClip(){if(!clip)return toast('Nothing copied yet');
+  if(clip.whole&&!selRect){edit(()=>{const g=G(sel);g.rows.fill(0);g.m.fill(0);putClip(g,clip,0,0,true);g.adv=Math.min(clip.adv==null?F.w:clip.adv,F.w)});return}
+  const ox=selRect?selRect.x0:0,oy=selRect?selRect.y0:0;edit(()=>putClip(G(sel),clip,ox,oy,false));selRect={x0:ox,y0:oy,x1:Math.min(F.w-1,ox+clip.w-1),y1:Math.min(F.h-1,oy+clip.h-1)};drawMain()}
+$('#opCopy').onclick=copySel;$('#opPaste').onclick=pasteClip;
 $('#gAdv').onchange=e=>edit(()=>{G(sel).adv=clamp(+e.target.value|0,0,F.w)});
 const trim=g=>{const r=inkRight(g);if(r>=0)g.adv=r+1};
 $('#aTrim').onclick=()=>edit(()=>trim(G(sel)));
 $('#aTrimAll').onclick=()=>edit(()=>{for(let c=F.first;c<=F.last;c++)trim(G(c))});
 $('#aFullAll').onclick=()=>edit(()=>{for(let c=F.first;c<=F.last;c++)G(c).adv=F.w});
 $('#glist').addEventListener('click',e=>{const d=e.target.closest('.gi');if(d)selectGlyph(+d.dataset.c)});
-function selectGlyph(c){if(c<F.first||c>F.last)return;sel=c;syncUI();drawList();drawMain()}
+function selectGlyph(c){if(c<F.first||c>F.last)return;sel=c;selRect=null;syncUI();drawList();drawMain()}
 zoomR.oninput=drawMain;$('#oGrid').onchange=drawMain;
 
 /* ---------- font settings ---------- */
 function setSize(nw,nh){
   nw=clamp(nw|0,1,MAXD);nh=clamp(nh|0,1,MAXD);const ow=F.w,m=(1<<nw)-1;
-  for(const k in F.glyphs){const g=F.glyphs[k],r=[];for(let y=0;y<nh;y++)r.push((g.rows[y]||0)&m);g.rows=r;g.adv=g.adv===ow?nw:Math.min(g.adv,nw)}
+  for(const k in F.glyphs){const g=F.glyphs[k],r=[];for(let y=0;y<nh;y++)r.push((g.rows[y]||0)&m);g.rows=r;g.m=Array.from({length:nh},(_,y)=>(g.m[y]||0)&m);g.adv=g.adv===ow?nw:Math.min(g.adv,nw)}
   F.w=nw;F.h=nh;
 }
 function setRange(a,b){a=clamp(a|0,0,255);b=clamp(b|0,0,255);if(a>b)b=a;F.first=a;F.last=b;fixSel()}
 $('#fName').onchange=e=>edit(()=>{F.name=e.target.value.trim().slice(0,40)||'font'});
 $('#fW').onchange=()=>edit(()=>setSize(+$('#fW').value,F.h));$('#fH').onchange=()=>edit(()=>setSize(F.w,+$('#fH').value));
 $('#fFirst').onchange=()=>edit(()=>setRange(+$('#fFirst').value,F.last));$('#fLast').onchange=()=>edit(()=>setRange(F.first,+$('#fLast').value));
-$('#fSpacing').onchange=e=>edit(()=>{F.spacing=clamp(+e.target.value|0,0,8)});$('#fGap').onchange=e=>edit(()=>{F.gap=clamp(+e.target.value|0,0,16)});
+$('#fSpacing').onchange=e=>edit(()=>{F.spacing=clamp(+e.target.value|0,-8,8)});$('#fGap').onchange=e=>edit(()=>{F.gap=clamp(+e.target.value|0,0,16)});
 $('#fProp').onchange=e=>edit(()=>{F.prop=e.target.checked});
 $('#preset').onchange=e=>{const v=e.target.value;e.target.value='';if(!v)return;const [a,b]=v.split(',').map(Number);edit(()=>setRange(a,b))};
-$('#pvText').oninput=()=>{renderPreview();clearTimeout(saveT);saveT=setTimeout(autosave,500)};$('#pvZoom').onchange=renderPreview;$('#pvInv').onchange=renderPreview;
+$('#pvText').oninput=()=>{renderPreview();clearTimeout(saveT);saveT=setTimeout(autosave,500)};$('#pvZoom').onchange=renderPreview;$('#pvBg').onchange=renderPreview;
 
 /* ---------- misc UI helpers ---------- */
 let tt=0;function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',2600)}
@@ -299,8 +347,7 @@ function download(name,data,mime){const b=data instanceof Blob?data:new Blob([da
 function copyText(ta){ta.select();try{navigator.clipboard.writeText(ta.value).then(()=>toast('Copied'),()=>{document.execCommand('copy');toast('Copied')})}catch(e){document.execCommand('copy');toast('Copied')}}
 const fname=()=>(F.name||'font').replace(/[^\w\-]+/g,'_');
 const ident=s=>{s=String(s).replace(/\W+/g,'_').replace(/^_+|_+$/g,'')||'font';return /^\d/.test(s)?'f_'+s:s};
-function gridCanvas(list,w,h,per,s){const rows=Math.max(1,Math.ceil(list.length/per)),cn=document.createElement('canvas');cn.className='pv';cn.width=(Math.min(per,list.length)||1)*(w+1)*s;cn.height=rows*(h+1)*s;const c=cn.getContext('2d');c.fillStyle='#ece8e3';c.fillRect(0,0,cn.width,cn.height);list.forEach((rws,i)=>{const ox=(i%per)*(w+1)*s,oy=Math.floor(i/per)*(h+1)*s;c.fillStyle='#fff';c.fillRect(ox,oy,w*s,h*s);c.fillStyle='#2e2424';for(let y=0;y<h;y++)for(let x=0;x<w;x++)if((rws[y]>>x)&1)c.fillRect(ox+x*s,oy+y*s,s,s)});return cn}
-
+function gridCanvas(list,w,h,per,s){const rows=Math.max(1,Math.ceil(list.length/per)),cn=document.createElement('canvas');cn.className='pv';cn.width=(Math.min(per,list.length)||1)*(w+1)*s;cn.height=rows*(h+1)*s;const c=cn.getContext('2d');c.fillStyle='#ece8e3';c.fillRect(0,0,cn.width,cn.height);list.forEach((g,i)=>{const ox=(i%per)*(w+1)*s,oy=Math.floor(i/per)*(h+1)*s;c.fillStyle='#b9b3ac';c.fillRect(ox,oy,w*s,h*s);for(let y=0;y<h;y++)for(let x=0;x<w;x++)if((g.m[y]>>x)&1){c.fillStyle=((g.rows[y]>>x)&1)?'#fff':'#000';c.fillRect(ox+x*s,oy+y*s,s,s)}});return cn}
 /* ---------- project open / save ---------- */
 function saveProject(){download(fname()+'.atmfont',JSON.stringify({format:'atmfont',version:1,font:F}),'application/json')}
 function openProject(txt){let o;try{o=JSON.parse(txt);if(o.font)o=o.font;const f=sanitize(o);edit(()=>{F=f});sel=clamp(sel,F.first,F.last);renderAll();toast('Opened '+F.name)}catch(e){toast('Not a valid font project')}}
@@ -322,27 +369,32 @@ function newDialog(){
 /* ---------- PNG export / import ---------- */
 function exportPNG(){
   const n=F.last-F.first+1,per=Math.min(16,n),rows=Math.ceil(n/per),cn=document.createElement('canvas');cn.width=per*F.w;cn.height=rows*F.h;const c=cn.getContext('2d');
-  for(let i=0;i<n;i++)drawGlyph(c,G(F.first+i),(i%per)*F.w,Math.floor(i/per)*F.h,1,'#000');
+  for(let i=0;i<n;i++)drawGlyph(c,G(F.first+i),(i%per)*F.w,Math.floor(i/per)*F.h,1,'#fff','#000');
   cn.toBlob(b=>download(fname()+'_'+F.w+'x'+F.h+'.png',b),'image/png');
 }
 function importImg(file){
   const img=new Image();img.onload=()=>{
     const cn=document.createElement('canvas');cn.width=img.width;cn.height=img.height;const c=cn.getContext('2d',{willReadFrequently:true});c.drawImage(img,0,0);const id=c.getImageData(0,0,img.width,img.height).data;
+    let hasA=false;for(let i=3;i<id.length;i+=4)if(id[i]<128){hasA=true;break}
     const m=/_(\d+)x(\d+)\./i.exec(file.name);
     const d=dlg('<h3>Import image sheet</h3><p class="hint">'+esc(file.name)+' – '+img.width+'×'+img.height+' px. The image is cut into a grid of equal cells, one glyph each, left to right, top to bottom.</p>'+
      '<div class="row"><label>Cell size</label><input type="number" id="iW" min="1" max="24" value="'+(m?m[1]:F.w)+'"> × <input type="number" id="iH" min="1" max="24" value="'+(m?m[2]:F.h)+'"> <label style="min-width:0;margin-left:10px">Gap</label><input type="number" id="iG" min="0" max="16" value="0"></div>'+
-     '<div class="row"><label>First char</label><input type="number" id="iF" min="0" max="255" value="'+F.first+'"> <span class="hint" id="iFc"></span></div><div class="row"><label class="chk"><input type="checkbox" id="iInv"> Light pixels are ink (white on black image)</label></div>'+
+     '<div class="row"><label>First char</label><input type="number" id="iF" min="0" max="255" value="'+F.first+'"> <span class="hint" id="iFc"></span></div>'+
+     '<div class="row"><label>Colours</label><select id="iMode" class="light"><option value="dark">dark pixels are the letters (white), the rest transparent</option><option value="light">light pixels are the letters (white), the rest transparent</option><option value="rgba">use the image: white, black and transparent pixels</option></select></div>'+
      '<div class="scroll" id="iPv"></div><div class="msg ok" id="iInfo"></div><div class="dfoot"><button class="ghost" id="iC">Cancel</button><button class="play" id="iOK">Import</button></div>');
+    d.$('#iMode').value=hasA?'rgba':'dark';
     let res=null;
     const upd=()=>{
-      const w=clamp(+d.$('#iW').value|0,1,MAXD),h=clamp(+d.$('#iH').value|0,1,MAXD),gp=clamp(+d.$('#iG').value|0,0,16),inv=d.$('#iInv').checked,first=clamp(+d.$('#iF').value|0,0,255);
+      const w=clamp(+d.$('#iW').value|0,1,MAXD),h=clamp(+d.$('#iH').value|0,1,MAXD),gp=clamp(+d.$('#iG').value|0,0,16),mode=d.$('#iMode').value,first=clamp(+d.$('#iF').value|0,0,255);
       const cols=Math.floor((img.width+gp)/(w+gp)),rws=Math.floor((img.height+gp)/(h+gp)),list=[];
-      for(let r=0;r<rws;r++)for(let k=0;k<cols;k++){const rows=[];for(let y=0;y<h;y++){let v=0;for(let x=0;x<w;x++){const i=((r*(h+gp)+y)*img.width+k*(w+gp)+x)*4,lum=(id[i]+id[i+1]+id[i+2])/3,ink=id[i+3]>127&&(inv?lum>=128:lum<128);if(ink)v|=1<<x}rows.push(v)}list.push(rows)}
-      while(list.length>1&&list[list.length-1].every(r=>!r))list.pop();const n=Math.min(list.length,256-first);list.length=Math.max(0,n);res={w,h,first,list};
+      for(let r=0;r<rws;r++)for(let k=0;k<cols;k++){const rows=[],mk=[];for(let y=0;y<h;y++){let v=0,mm=0;for(let x=0;x<w;x++){const i=((r*(h+gp)+y)*img.width+k*(w+gp)+x)*4,lum=(id[i]+id[i+1]+id[i+2])/3,a=id[i+3];
+        const st=mode==='rgba'?(a<128?2:lum>=128?1:0):mode==='dark'?(a>127&&lum<128?1:2):(a>127&&lum>=128?1:2);
+        if(st!==2){mm|=1<<x;if(st)v|=1<<x}}rows.push(v);mk.push(mm)}list.push({rows,m:mk})}
+      while(list.length>1&&list[list.length-1].m.every(r=>!r))list.pop();const n=Math.min(list.length,256-first);list.length=Math.max(0,n);res={w,h,first,list};
       d.$('#iFc').textContent='= '+chName(first);const pv=d.$('#iPv');pv.innerHTML='';if(list.length)pv.appendChild(gridCanvas(list,w,h,Math.max(1,Math.floor(660/((w+1)*3))),3));
       d.$('#iInfo').textContent=list.length+' glyph'+(list.length===1?'':'s')+' found ('+cols+' × '+rws+' cells), chars '+chName(first)+' … '+(list.length?chName(first+list.length-1):'-');
     };
-    d.el.addEventListener('input',upd);upd();d.$('#iC').onclick=d.close;
+    d.el.addEventListener('input',upd);d.el.addEventListener('change',upd);upd();d.$('#iC').onclick=d.close;
     d.$('#iOK').onclick=()=>{if(!res.list.length){toast('No glyphs to import');return}applyGlyphs(file.name.replace(/\.\w+$/,'').replace(/_\d+x\d+$/,''),res.w,res.h,res.first,res.list);d.close()};
   };
   img.onerror=()=>toast('Could not read that image');img.src=URL.createObjectURL(file);
@@ -350,7 +402,7 @@ function importImg(file){
 function applyGlyphs(name,w,h,first,list,moves){
   edit(()=>{
     F=newFont({name:ident(name).slice(0,40),w,h,first,last:first+list.length-1,spacing:F.spacing,gap:F.gap});
-    list.forEach((rows,i)=>{F.glyphs[first+i]={rows:rows.slice(),adv:w}});
+    list.forEach((g,i)=>{F.glyphs[first+i]={rows:g.rows.slice(),m:g.m.slice(),adv:w}});
     for(const [a,b] of moves||[]){if(F.glyphs[a]){F.glyphs[b]=F.glyphs[a];delete F.glyphs[a];F.glyphs[a]=blank();F.first=Math.min(F.first,b);F.last=Math.max(F.last,b)}}
   });
   sel=clamp(sel,F.first,F.last);if(!(sel>=F.first&&sel<=F.last))sel=F.first;
@@ -371,7 +423,7 @@ function importTTF(file){
     const upd=()=>{
       const w=clamp(+d.$('#tW').value|0,1,MAXD),h=clamp(+d.$('#tH').value|0,1,MAXD),size=+d.$('#tS').value||8,th=+d.$('#tT').value,bl=+d.$('#tB').value,ox=+d.$('#tX').value,a=clamp(+d.$('#tA').value|0,0,255),z=clamp(+d.$('#tZ').value|0,a,255);
       const cn=document.createElement('canvas');cn.width=w;cn.height=h;const c=cn.getContext('2d',{willReadFrequently:true}),list=[];
-      for(let ch=a;ch<=z;ch++){c.clearRect(0,0,w,h);c.fillStyle='#000';c.font=size+'px "'+fam+'"';c.textBaseline='alphabetic';c.fillText(String.fromCharCode(ch),ox,bl);const px=c.getImageData(0,0,w,h).data,rows=[];for(let y=0;y<h;y++){let v=0;for(let x=0;x<w;x++)if(px[(y*w+x)*4+3]>=th)v|=1<<x;rows.push(v)}list.push(rows)}
+      for(let ch=a;ch<=z;ch++){c.clearRect(0,0,w,h);c.fillStyle='#000';c.font=size+'px "'+fam+'"';c.textBaseline='alphabetic';c.fillText(String.fromCharCode(ch),ox,bl);const px=c.getImageData(0,0,w,h).data,rows=[];for(let y=0;y<h;y++){let v=0;for(let x=0;x<w;x++)if(px[(y*w+x)*4+3]>=th)v|=1<<x;rows.push(v)}list.push({rows,m:rows.slice()})}
       res={w,h,first:a,list};const pv=d.$('#tPv');pv.innerHTML='';pv.appendChild(gridCanvas(list,w,h,Math.max(1,Math.floor(660/((w+1)*3))),3));
     };
     d.el.addEventListener('input',upd);upd();d.$('#tC').onclick=d.close;
@@ -392,13 +444,16 @@ function parseArrays(text){
   }
   return out;
 }
-function buildFromArray(d,o){
+function buildFromArray(d,o,dm){
   const aw=d[0],ah=d[1];if(!aw||!ah)return null;const pages=Math.ceil(ah/8),fb=aw*pages,nF=Math.floor((d.length-2)/fb);
-  const px=(f,x,y)=>(d[2+f*fb+(y>>3)*aw+x]>>(y&7))&1;let gw,list=[];const gh=ah;
-  if(o.mode==='sheet'){gw=aw;for(let f=o.skip;f<nF;f++){const rows=[];for(let y=0;y<gh;y++){let r=0;for(let x=0;x<gw;x++)if(px(f,x,y))r|=1<<x;rows.push(r)}list.push(rows)}}
-  else{gw=o.cols;const n=Math.floor((nF-o.skip)/o.cols);for(let g=0;g<n;g++){const rows=[];for(let y=0;y<gh;y++){let r=0;for(let j=0;j<gw;j++)if(px(o.skip+g*gw+j,0,y))r|=1<<j;rows.push(r)}list.push(rows)}}
-  if(gw>MAXD||gh>MAXD||gw<1||!list.length)return null;
-  if(o.trim){let used=0;for(const rows of list)for(let y=0;y<gh;y++)if(rows[y])used=Math.max(used,y+1);used=Math.max(1,used);if(used<gh){list=list.map(r=>r.slice(0,used));return {w:gw,h:used,list}}}
+  const bit=(a,f,x,y)=>(a[2+f*fb+(y>>3)*aw+x]>>(y&7))&1,mk=dm&&dm.length>=d.length?dm:null;
+  const defs=[];let gw;
+  if(o.mode==='sheet'){gw=aw;for(let f=o.skip;f<nF;f++)defs.push(Array.from({length:gw},(_,x)=>[f,x]))}
+  else{gw=o.cols;const n=Math.floor((nF-o.skip)/o.cols);for(let g=0;g<n;g++)defs.push(Array.from({length:gw},(_,j)=>[o.skip+g*gw+j,0]))}
+  if(gw>MAXD||ah>MAXD||gw<1||!defs.length)return null;
+  let list=defs.map(cs=>{const rows=[],m=[];for(let y=0;y<ah;y++){let rr=0,kk=0;cs.forEach(([f,x],j)=>{const w=bit(d,f,x,y);if(w)rr|=1<<j;if(mk?bit(mk,f,x,y):w)kk|=1<<j});rows.push(rr);m.push(kk|rr)}return {rows,m}});
+  let gh=ah;
+  if(o.trim){let used=0;for(const g of list)for(let y=0;y<ah;y++)if(g.m[y])used=Math.max(used,y+1);used=Math.max(1,used);if(used<ah){list=list.map(g=>({rows:g.rows.slice(0,used),m:g.m.slice(0,used)}));gh=used}}
   return {w:gw,h:gh,list};
 }
 const parseCode=s=>s.length===1?s.charCodeAt(0):/^\d+$/.test(s)?+s:NaN;
@@ -409,6 +464,7 @@ function importH(text,fn){
   const d=dlg('<h3>Import font from a .h file</h3>'+
    '<div class="row"><label>Array</label><select id="hA" class="light">'+arrs.map((a,i)=>'<option value="'+i+'">'+esc(a.name)+' – '+a.data[0]+'×'+a.data[1]+', '+a.data.length+' bytes</option>').join('')+'</select></div>'+
    '<div class="row"><label>Layout</label><select id="hM" class="light"><option value="sheet">Sprite sheet: 1 frame = 1 glyph</option><option value="cols">Column frames: N one-pixel-wide frames = 1 glyph (ID-20)</option></select></div>'+
+   '<div class="row"><label>Mask</label><select id="hK" class="light"><option value="none">none – only white pixels</option><option value="sep">separate mask array →</option><option value="plus">interleaved sprite + mask (plus_mask)</option></select> <select id="hMa" class="light">'+arrs.map((a,i)=>'<option value="'+i+'">'+esc(a.name)+'</option>').join('')+'</select></div>'+
    '<div class="row"><label>Columns/glyph</label><input type="number" id="hC" min="1" max="24" value="3"> <label style="min-width:0;margin-left:10px">Skip frames</label><input type="number" id="hS" min="0" max="255" value="0"> <span class="hint">(blank frame 0)</span></div>'+
    '<div class="row"><label>First char</label><input type="number" id="hF" min="0" max="255" value="32"> <span class="hint" id="hFc"></span></div>'+
    '<div class="row"><label>Move glyphs</label><input type="text" id="hV" placeholder="e.g.  ;=.  @=-" style="width:170px"> <span class="hint">from=to pairs; ID-20 keeps “.” in “;” and “-” in “@”</span></div>'+
@@ -422,14 +478,21 @@ function importH(text,fn){
     const pages=Math.ceil(a.data[1]/8),frames=Math.floor(nF1/(a.data[0]*pages)),c=+d.$('#hC').value;
     d.$('#hS').value=meta.fmt==='cols'?1:(cols&&(frames-1)%c===0?1:0);
     if(meta.first)d.$('#hF').value=meta.first;
+    const nm=a.name;let k='none',mi=0;
+    if(meta.mask==='plus'||/_plus_?mask$/i.test(nm))k='plus';
+    else{const j=arrs.findIndex(b=>b.name.toLowerCase()===(nm+'_mask').toLowerCase());if(j>=0){k='sep';mi=j}}
+    d.$('#hK').value=k;d.$('#hMa').value=mi;
   };
   const upd=()=>{
     const a=arrs[+d.$('#hA').value],o={mode:d.$('#hM').value,cols:clamp(+d.$('#hC').value|0,1,24),skip:Math.max(0,+d.$('#hS').value|0),trim:d.$('#hT').checked};
     const first=clamp(+d.$('#hF').value|0,0,255);d.$('#hFc').textContent='= '+chName(first);
-    const r=buildFromArray(a.data,o),pv=d.$('#hPv'),info=d.$('#hInfo');pv.innerHTML='';
+    let img=a.data,dm=null;const kk=d.$('#hK').value;
+    if(kk==='plus'){img=a.data.slice(0,2);dm=a.data.slice(0,2);for(let i=2;i+1<a.data.length;i+=2){img.push(a.data[i]);dm.push(a.data[i+1])}}
+    else if(kk==='sep'){const b=arrs[+d.$('#hMa').value];if(b&&b!==a)dm=b.data}
+    const r=buildFromArray(img,o,dm),pv=d.$('#hPv'),info=d.$('#hInfo');pv.innerHTML='';
     if(!r){res=null;info.className='msg err';info.textContent='Cannot build glyphs with these settings (glyphs must be at most 24×24).';return}
     if(first+r.list.length>256)r.list.length=256-first;
-    res=Object.assign(r,{first,name:a.name});pv.appendChild(gridCanvas(r.list,r.w,r.h,Math.max(1,Math.floor(660/((r.w+1)*3))),3));
+    res=Object.assign(r,{first,name:a.name.replace(/_plus_?mask$/i,'').replace(/_mask$/i,'')});pv.appendChild(gridCanvas(r.list,r.w,r.h,Math.max(1,Math.floor(660/((r.w+1)*3))),3));
     info.className='msg ok';info.textContent=r.list.length+' glyphs of '+r.w+'×'+r.h+' px, chars '+chName(first)+' … '+chName(first+r.list.length-1);
   };
   setDefaults();d.$('#hA').onchange=()=>{setDefaults();upd()};d.el.addEventListener('input',upd);d.el.addEventListener('change',upd);upd();
@@ -439,9 +502,10 @@ function importH(text,fn){
 }
 
 /* ---------- Arduboy export ---------- */
-function defaultAO(){return {fmt:'cols',name:ident(F.name).toLowerCase(),from:F.first,to:F.last,only:'',prop:F.prop,skipEmpty:true,startTable:false,style:'bin',helper:true,charBox:false,maxChars:30}}
+function defaultAO(){let bl=false;for(let c=F.first;c<=F.last;c++)if(F.glyphs[c]&&hasBlack(F.glyphs[c])){bl=true;break}
+  return {fmt:'cols',name:ident(F.name).toLowerCase(),from:F.first,to:F.last,only:'',prop:F.prop,skipEmpty:true,startTable:false,style:'bin',helper:true,charBox:false,maxChars:30,mask:bl?'plus':'none'}}
 function genArduboy(o){
-  const W=F.w,H=F.h,pages=Math.ceil(H/8),P=ident(o.name),U=P.toUpperCase(),warn=[],cols=o.fmt==='cols';
+  const W=F.w,H=F.h,pages=Math.ceil(H/8),P=ident(o.name),U=P.toUpperCase(),warn=[],cols=o.fmt==='cols',mk=o.mask||'none';
   let codes=[];
   if(o.only&&o.only.length){codes=[...new Set([...o.only].map(c=>c.charCodeAt(0)))].filter(c=>c<256).sort((a,b)=>a-b)}
   else for(let c=clamp(o.from|0,0,255);c<=clamp(o.to|0,0,255);c++)codes.push(c);
@@ -451,39 +515,48 @@ function genArduboy(o){
   const contiguous=codes.every((c,i)=>c===codes[0]+i),first=codes[0],last=codes[codes.length-1];
   const prop=!!o.prop,advOf=c=>prop?clamp(G(c).adv,0,W):W;
   const hex2=n=>n.toString(16).toUpperCase().padStart(2,'0'),B=b=>o.style==='bin'?'0B'+b.toString(2).padStart(8,'0'):'0x'+hex2(b);
-  const colBytes=(g,x)=>{const a=[];for(let p=0;p<pages;p++){let b=0;for(let k=0;k<8;k++){const y=p*8+k;if(y<H&&((g.rows[y]>>x)&1))b|=1<<k}a.push(b)}return a};
+  // pl: 's' sprite (white) bits, 'm' mask bits, 'p' interleaved sprite,mask per page
+  const colBytes=(g,x,pl)=>{const a=[];for(let p=0;p<pages;p++){let sb=0,mb=0;for(let k=0;k<8;k++){const y=p*8+k;if(y<H){if((g.rows[y]>>x)&1)sb|=1<<k;if((g.m[y]>>x)&1)mb|=1<<k}}if(pl==='s')a.push(sb);else if(pl==='m')a.push(mb);else a.push(sb,mb)}return a};
   const cmt=c=>'// '+(c===32?'space':c>32&&c<127?String.fromCharCode(c):'#'+c)+'  -  ASCII DEC '+c+' ; HEX '+hex2(c);
-  const L=[];let bytes=2;
-  const emit=(arr)=>{bytes+=arr.length;if(o.style==='bin')arr.forEach(b=>L.push(B(b)+','));else for(let i=0;i<arr.length;i+=16)L.push(arr.slice(i,i+16).map(B).join(', ')+',')};
-  let frames=0;
-  L.push('// width, height,');L.push(cols?'1, '+H+',':W+', '+H+',');
-  if(cols){L.push('// blank frame (used for spaces and unknown characters)');emit(new Array(pages).fill(0));frames=1;
-    for(const c of codes){const g=G(c),n=advOf(c);L.push(cmt(c));if(o.style==='bin'){for(let x=0;x<n;x++)emit(colBytes(g,x))}else{const a=[];for(let x=0;x<n;x++)a.push(...colBytes(g,x));emit(a)}frames+=n}
-  }else{
-    for(const c of codes){const g=G(c);L.push(cmt(c));for(let p=0;p<pages;p++){const a=[];for(let x=0;x<W;x++)a.push(colBytes(g,x)[p]);emit(a)}frames++}
-  }
+  const build=pl=>{
+    const L=[],per=pl==='p'?2:1;let bytes=2,frames=0;
+    const emit=arr=>{bytes+=arr.length;if(o.style==='bin')arr.forEach(b=>L.push(B(b)+','));else for(let i=0;i<arr.length;i+=16)L.push(arr.slice(i,i+16).map(B).join(', ')+',')};
+    L.push('// width, height,');L.push(cols?'1, '+H+',':W+', '+H+',');
+    if(cols){L.push('// blank frame (used for spaces and unknown characters)');emit(new Array(pages*per).fill(0));frames=1;
+      for(const c of codes){const g=G(c),n=advOf(c);L.push(cmt(c));if(o.style==='bin'){for(let x=0;x<n;x++)emit(colBytes(g,x,pl))}else{const a=[];for(let x=0;x<n;x++)a.push(...colBytes(g,x,pl));emit(a)}frames+=n}
+    }else{
+      for(const c of codes){const g=G(c);L.push(cmt(c));for(let p=0;p<pages;p++){const a=[];for(let x=0;x<W;x++)a.push(...colBytes(g,x,pl).slice(p*per,p*per+per));emit(a)}frames++}
+    }
+    return {L,bytes,frames};
+  };
+  const SYM=mk==='plus'?P+'_plus_mask':P;
+  const arrays=mk==='none'?[['s',P]]:mk==='sep'?[['s',P],['m',P+'_mask']]:[['p',P+'_plus_mask']];
+  const builds=arrays.map(([pl,nm])=>Object.assign({nm},build(pl)));
+  const frames=builds[0].frames;let bytes=builds.reduce((a,b)=>a+b.bytes,0);
+  const DRAW=(x,y,f)=>mk==='none'?'Sprites::drawSelfMasked('+x+', '+y+', '+P+', '+f+')':mk==='sep'?'Sprites::drawExternalMask('+x+', '+y+', '+P+', '+P+'_mask, '+f+', '+f+')':'Sprites::drawPlusMask('+x+', '+y+', '+SYM+', '+f+')';
   if(cols&&frames>255)warn.push('This font needs '+frames+' frames. Arduboy2 Sprites use an 8-bit frame number (max 255): export fewer characters.');
   if(!cols&&codes.length>255)warn.push('More than 255 glyphs: the frame number is 8-bit.');
-  // tables
+  if(mk==='none'&&codes.some(c=>hasBlack(G(c))))warn.push('The font has black pixels, but the mask is set to “None”: black and transparent pixels are both left out. Choose a mask option to draw the black pixels.');
   let widths=null,packed=false,startT=null,chars='';
   if(prop){widths=codes.map(advOf);packed=Math.max(...widths)<=15}
-  if(cols&&prop&&o.startTable){startT=[];let s=1;for(const w of widths){startT.push(s);s+=w}}
+  if(cols&&prop&&o.startTable){startT=[];let sf=1;for(const w of widths){startT.push(sf);sf+=w}}
   if(!contiguous)chars=codes.map(c=>(c>=32&&c<127&&c!==34&&c!==92&&c!==63)?String.fromCharCode(c):'\\'+c.toString(8).padStart(3,'0')).join('');
-  const lineTable=(name,type,arr,fmtF)=>{const s=[];for(let i=0;i<arr.length;i+=16)s.push('  '+arr.slice(i,i+16).map(fmtF).join(', ')+',');return 'PROGMEM const '+type+' '+name+'[] =\n{\n'+s.join('\n')+'\n};\n'};
+  const lineTable=(name,type,arr,fmtF)=>{const sl=[];for(let i=0;i<arr.length;i+=16)sl.push('  '+arr.slice(i,i+16).map(fmtF).join(', ')+',');return 'PROGMEM const '+type+' '+name+'[] =\n{\n'+sl.join('\n')+'\n};\n'};
   let packedArr=null;
   if(prop){if(packed){packedArr=[];for(let i=0;i<widths.length;i+=2)packedArr.push(widths[i]|((widths[i+1]||0)<<4));bytes+=packedArr.length}else bytes+=widths.length}
   if(startT)bytes+=startT.length;
   if(!contiguous)bytes+=codes.length+1;
-  // space width for blank / unknown characters
   const spaceW=prop?(G(32).adv>0&&32>=F.first&&32<=F.last?G(32).adv:Math.max(1,W>>1)):W;
   let out='// '+F.name+' - pixel font, '+W+'x'+H+' px cell, '+codes.length+' glyphs'+(contiguous?' (ASCII '+first+'-'+last+')':'')+'\n// Made with the Pixel Font Editor by TEAM a.r.g.  https://t-arg.github.io/\n';
-  out+='// PixelFontEditor: fmt='+(cols?'cols':'sheet')+' cellw='+(cols&&prop?'0':W)+' cellh='+H+' first='+first+' count='+codes.length+(prop?' prop=1':'')+'\n';
+  out+='// PixelFontEditor: fmt='+(cols?'cols':'sheet')+' cellw='+(cols&&prop?'0':W)+' cellh='+H+' first='+first+' count='+codes.length+(prop?' prop=1':'')+' mask='+mk+'\n';
   out+=cols?'// Format: 1-pixel-wide frames (one column per frame), frame 0 is blank. Bits: LSB = top row.\n':'// Format: sprite sheet, one frame per glyph. Bits: LSB = top row of each 8-pixel page.\n';
+  out+=mk==='none'?'// Mask: none, only the white pixels are drawn (Sprites::drawSelfMasked).\n':mk==='sep'?'// Mask: separate '+P+'_mask array, black pixels are drawn too (Sprites::drawExternalMask).\n':'// Mask: sprite and mask bytes are interleaved, black pixels are drawn too (Sprites::drawPlusMask).\n';
   out+='\n#ifndef '+U+'_H\n#define '+U+'_H\n\n';
   out+='#define '+U+'_WIDTH     '+W+'\n#define '+U+'_HEIGHT    '+H+'\n#define '+U+'_SPACING   '+F.spacing+'\n';
   if(contiguous)out+='#define '+U+'_FIRST     '+first+'\n#define '+U+'_LAST      '+last+'\n';
   if(prop||cols)out+='#define '+U+'_SPACE     '+spaceW+'   // width of a blank / unknown character\n';
-  out+='\nPROGMEM const unsigned char '+P+'[] =\n{\n'+L.join('\n')+'\n};\n\n';
+  out+='\n';
+  for(const b of builds)out+='PROGMEM const unsigned char '+b.nm+'[] =\n{\n'+b.L.join('\n')+'\n};\n\n';
   if(!contiguous)out+='// characters in the order of the frames above\nPROGMEM const char '+P+'_chars[] = "'+chars+'";\n\n';
   if(prop){out+='// advance width of every glyph'+(packed?' (two 4-bit values per byte, low nibble first)':'')+'\n';out+=packed?lineTable(P+'_width','unsigned char',packedArr,v=>'0x'+hex2(v)):lineTable(P+'_width','unsigned char',widths,v=>String(v))+'\n';if(packed)out+='\n'}
   if(startT)out+='// first frame of every glyph\n'+lineTable(P+'_start','unsigned char',startT,v=>String(v))+'\n';
@@ -494,13 +567,24 @@ function genArduboy(o){
     out+='}\n\n';
     if(prop)out+='static uint8_t '+P+'_glyphWidth(uint8_t i)\n{\n  return '+(packed?'(pgm_read_byte(&'+P+'_width[i >> 1]) >> ((i & 1) << 2)) & 15;':'pgm_read_byte(&'+P+'_width[i]);')+'\n}\n\n';
     const head='// Draws a string at x,y. Set inFlash to true for a PROGMEM string. No line breaks.\nvoid '+P+'_drawText(int16_t x, int16_t y, const char *s, bool inFlash = false)\n{\n  for (;;)\n  {\n    char c = inFlash ? pgm_read_byte(s) : *s;\n    s++;\n    if (c == 0) break;\n    int16_t i = '+P+'_index(c);\n';
-    if(!cols){
-      out+=head+(prop?'    if (i < 0) { x += '+U+'_SPACE + '+U+'_SPACING; continue; }\n    Sprites::drawSelfMasked(x, y, '+P+', i);\n    x += '+P+'_glyphWidth(i) + '+U+'_SPACING;\n':'    if (i >= 0) Sprites::drawSelfMasked(x, y, '+P+', i);\n    x += '+U+'_WIDTH + '+U+'_SPACING;\n')+'  }\n}\n';
+    const rev=F.spacing<0;
+    const addBox=()=>{if(o.charBox){const n=clamp(+o.maxChars|0,1,100);if(F.spacing<0)warn.push('Negative letter gap: the charBox ticker works with whole columns, so a letter hides the columns of the next one instead of letting its transparent pixels show through. drawText() overlaps exactly.');out+='\n// ID-20 style ticker: the text is converted ONCE into a list of frame numbers (0 = blank column).\n// Afterwards drawing, scrolling or blinking is just a loop over the list.\n#define '+U+'_CHARBOX_SIZE ('+n+' * ('+U+'_WIDTH + '+U+'_SPACING))\nunsigned char '+P+'_charBox['+U+'_CHARBOX_SIZE];\n\nvoid '+P+'_fillCharBox(const char *s, bool inFlash = false)\n{\n  memset('+P+'_charBox, 0, sizeof('+P+'_charBox));\n  uint16_t pos = 0;\n  while (pos + '+U+'_WIDTH <= sizeof('+P+'_charBox))\n  {\n    char c = inFlash ? pgm_read_byte(s) : *s;\n    s++;\n    if (c == 0) break;\n    int16_t i = '+P+'_index(c);\n    if (i >= 0)\n      for (uint8_t k = 0; k < '+U+'_WIDTH; k++)\n        '+(F.spacing<0?'if (!'+P+'_charBox[pos + k]) ':'')+P+'_charBox[pos + k] = 1 + i * '+U+'_WIDTH + k;\n    pos += '+U+'_WIDTH + '+U+'_SPACING;\n  }\n}\n\nvoid '+P+'_drawCharBox(int16_t x, int16_t y)\n{\n  for (uint16_t i = 0; i < sizeof('+P+'_charBox); i++)\n    if ('+P+'_charBox[i]) '+DRAW('x + i','y',P+'_charBox[i]')+';\n}\n'}};
+    const revFn=draw=>{
+      const wd=prop?'    uint8_t w = (i < 0) ? '+U+'_SPACE : '+P+'_glyphWidth(i);\n':'    uint8_t w = '+U+'_WIDTH;\n';
+      const rd=(v)=>'    char c = inFlash ? pgm_read_byte(s + '+v+') : s['+v+'];\n    int16_t i = '+P+'_index(c);\n';
+      const pass1=prop?'  int16_t e = x;\n  for (uint8_t j = 0; j < n; j++)\n  {\n'+rd('j')+wd+'    e += w + '+U+'_SPACING;\n  }\n':'  int16_t e = x + n * ('+U+'_WIDTH + '+U+'_SPACING);\n';
+      return '// Negative letter gap: the letters overlap, so they are drawn from the last to the first and every\n// letter ends up on top of the next one (its white and black pixels cover it, its transparent pixels show it).\n// Draws a string at x,y. Set inFlash to true for a PROGMEM string. No line breaks.\nvoid '+P+'_drawText(int16_t x, int16_t y, const char *s, bool inFlash = false)\n{\n  uint8_t n = 0;\n  while (inFlash ? pgm_read_byte(s + n) : s[n]) n++;\n'+pass1+'  for (uint8_t j = n; j > 0;)\n  {\n    j--;\n'+rd('j')+wd+'    e -= w + '+U+'_SPACING;\n'+draw+'  }\n}\n';
+    };
+    if(rev&&!cols){out+=revFn('    if (i >= 0) '+DRAW('e','y','i')+';\n')}
+    else if(rev&&!prop){out+=revFn('    if (i >= 0)\n      for (uint8_t k = 0; k < '+U+'_WIDTH; k++)\n        '+DRAW('e + k','y','1 + i * '+U+'_WIDTH + k')+';\n');addBox()}
+    else if(rev){out+=revFn('    if (i >= 0)\n    {\n'+(startT?'      uint8_t f = pgm_read_byte(&'+P+'_start[i]);\n':'      uint8_t f = 1;                       // frame 0 is blank\n      for (uint8_t k = 0; k < i; k++) f += '+P+'_glyphWidth(k);\n')+'      for (uint8_t k = 0; k < w; k++)\n        '+DRAW('e + k','y','f + k')+';\n    }\n')}
+    else if(!cols){
+      out+=head+(prop?'    if (i < 0) { x += '+U+'_SPACE + '+U+'_SPACING; continue; }\n    '+DRAW('x','y','i')+';\n    x += '+P+'_glyphWidth(i) + '+U+'_SPACING;\n':'    if (i >= 0) '+DRAW('x','y','i')+';\n    x += '+U+'_WIDTH + '+U+'_SPACING;\n')+'  }\n}\n';
     }else if(!prop){
-      out+=head+'    if (i >= 0)\n      for (uint8_t k = 0; k < '+U+'_WIDTH; k++)\n        Sprites::drawSelfMasked(x + k, y, '+P+', 1 + i * '+U+'_WIDTH + k);\n    x += '+U+'_WIDTH + '+U+'_SPACING;\n  }\n}\n';
-      if(o.charBox){const n=clamp(+o.maxChars|0,1,100);out+='\n// ID-20 style ticker: the text is converted ONCE into a list of frame numbers (0 = blank column).\n// Afterwards drawing, scrolling or blinking is just a loop over the list.\n#define '+U+'_CHARBOX_SIZE ('+n+' * ('+U+'_WIDTH + '+U+'_SPACING))\nunsigned char '+P+'_charBox['+U+'_CHARBOX_SIZE];\n\nvoid '+P+'_fillCharBox(const char *s, bool inFlash = false)\n{\n  memset('+P+'_charBox, 0, sizeof('+P+'_charBox));\n  uint16_t pos = 0;\n  while (pos + '+U+'_WIDTH <= sizeof('+P+'_charBox))\n  {\n    char c = inFlash ? pgm_read_byte(s) : *s;\n    s++;\n    if (c == 0) break;\n    int16_t i = '+P+'_index(c);\n    if (i >= 0)\n      for (uint8_t k = 0; k < '+U+'_WIDTH; k++)\n        '+P+'_charBox[pos + k] = 1 + i * '+U+'_WIDTH + k;\n    pos += '+U+'_WIDTH + '+U+'_SPACING;\n  }\n}\n\nvoid '+P+'_drawCharBox(int16_t x, int16_t y)\n{\n  for (uint16_t i = 0; i < sizeof('+P+'_charBox); i++)\n    if ('+P+'_charBox[i]) Sprites::drawSelfMasked(x + i, y, '+P+', '+P+'_charBox[i]);\n}\n'}
+      out+=head+'    if (i >= 0)\n      for (uint8_t k = 0; k < '+U+'_WIDTH; k++)\n        '+DRAW('x + k','y','1 + i * '+U+'_WIDTH + k')+';\n    x += '+U+'_WIDTH + '+U+'_SPACING;\n  }\n}\n';
+      addBox();
     }else{
-      out+=head+'    if (i < 0) { x += '+U+'_SPACE + '+U+'_SPACING; continue; }\n    uint8_t w = '+P+'_glyphWidth(i);\n'+(startT?'    uint8_t f = pgm_read_byte(&'+P+'_start[i]);\n':'    uint8_t f = 1;                       // frame 0 is blank\n    for (uint8_t k = 0; k < i; k++) f += '+P+'_glyphWidth(k);\n')+'    for (uint8_t k = 0; k < w; k++)\n      Sprites::drawSelfMasked(x + k, y, '+P+', f + k);\n    x += w + '+U+'_SPACING;\n  }\n}\n';
+      out+=head+'    if (i < 0) { x += '+U+'_SPACE + '+U+'_SPACING; continue; }\n    uint8_t w = '+P+'_glyphWidth(i);\n'+(startT?'    uint8_t f = pgm_read_byte(&'+P+'_start[i]);\n':'    uint8_t f = 1;                       // frame 0 is blank\n    for (uint8_t k = 0; k < i; k++) f += '+P+'_glyphWidth(k);\n')+'    for (uint8_t k = 0; k < w; k++)\n      '+DRAW('x + k','y','f + k')+';\n    x += w + '+U+'_SPACING;\n  }\n}\n';
     }
     out+='\n';
   }
@@ -512,6 +596,7 @@ function exportDialog(){
   const o=defaultAO();
   const d=dlg('<h3>Export for Arduboy (.h)</h3>'+
    '<div class="row"><label>Format</label><select id="aF" class="light" style="max-width:480px"><option value="cols">Column frames – compact, ID-20 style (1-pixel-wide frames)</option><option value="sheet">Sprite sheet – one frame per glyph</option></select></div>'+
+   '<div class="row"><label>Mask</label><select id="aK" class="light" style="max-width:480px"><option value="none">None – white pixels only (drawSelfMasked)</option><option value="sep">Separate mask array – black pixels too (drawExternalMask)</option><option value="plus">Sprite + mask interleaved – black pixels too (drawPlusMask)</option></select></div>'+
    '<div class="row"><label>Array name</label><input type="text" id="aN" style="width:150px"></div>'+
    '<div class="row"><label>Characters</label><input type="number" id="aA" min="0" max="255"> to <input type="number" id="aZ" min="0" max="255"> <label style="min-width:0;margin-left:8px">only</label><input type="text" id="aO" placeholder="optional list, e.g. 0123456789.-" style="width:210px"></div>'+
    '<div class="row"><label>Numbers</label><select id="aS" class="light"><option value="bin">Binary 0B00011111 (one byte per line)</option><option value="hex">Hex 0x1F</option></select></div>'+
@@ -522,13 +607,13 @@ function exportDialog(){
    '<div class="row" id="rB"><label class="chk"><input type="checkbox" id="aB"> Include ID-20 style charBox ticker</label> <span class="hint">max chars</span><input type="number" id="aM" min="1" max="100"></div>'+
    '<div id="aInfo"></div><textarea class="code" id="aCode" readonly spellcheck="false"></textarea>'+
    '<div class="dfoot"><button class="ghost" id="aCopy">Copy</button><button class="play" id="aDl">Download .h</button><button class="ghost" id="aX">Close</button></div>');
-  const set=()=>{d.$('#aF').value=o.fmt;d.$('#aN').value=o.name;d.$('#aA').value=o.from;d.$('#aZ').value=o.to;d.$('#aO').value=o.only;d.$('#aS').value=o.style;d.$('#aP').checked=o.prop;d.$('#aE').checked=o.skipEmpty;d.$('#aT').checked=o.startTable;d.$('#aH').checked=o.helper;d.$('#aB').checked=o.charBox;d.$('#aM').value=o.maxChars};
+  const set=()=>{d.$('#aF').value=o.fmt;d.$('#aK').value=o.mask;d.$('#aN').value=o.name;d.$('#aA').value=o.from;d.$('#aZ').value=o.to;d.$('#aO').value=o.only;d.$('#aS').value=o.style;d.$('#aP').checked=o.prop;d.$('#aE').checked=o.skipEmpty;d.$('#aT').checked=o.startTable;d.$('#aH').checked=o.helper;d.$('#aB').checked=o.charBox;d.$('#aM').value=o.maxChars};
   let code='';
   const upd=()=>{
-    Object.assign(o,{fmt:d.$('#aF').value,name:d.$('#aN').value,from:+d.$('#aA').value,to:+d.$('#aZ').value,only:d.$('#aO').value,style:d.$('#aS').value,prop:d.$('#aP').checked,skipEmpty:d.$('#aE').checked,startTable:d.$('#aT').checked,helper:d.$('#aH').checked,charBox:d.$('#aB').checked,maxChars:+d.$('#aM').value||30});
+    Object.assign(o,{fmt:d.$('#aF').value,mask:d.$('#aK').value,name:d.$('#aN').value,from:+d.$('#aA').value,to:+d.$('#aZ').value,only:d.$('#aO').value,style:d.$('#aS').value,prop:d.$('#aP').checked,skipEmpty:d.$('#aE').checked,startTable:d.$('#aT').checked,helper:d.$('#aH').checked,charBox:d.$('#aB').checked,maxChars:+d.$('#aM').value||30});
     const cols=o.fmt==='cols';d.$('#rE').style.display=cols?'':'none';d.$('#rT').style.display=cols&&o.prop?'':'none';d.$('#rB').style.display=cols&&!o.prop&&o.helper?'':'none';
-    const r=genArduboy(o);code=r.code;d.$('#aCode').value=code;
-    d.$('#aInfo').innerHTML='<div class="msg ok">'+r.bytes+' bytes of flash for the font data and tables.</div>'+r.warn.map(w=>'<div class="msg warn">'+esc(w)+'</div>').join('');
+    const rs=genArduboy(o);code=rs.code;d.$('#aCode').value=code;
+    d.$('#aInfo').innerHTML='<div class="msg ok">'+rs.bytes+' bytes of flash for the font data and tables.</div>'+rs.warn.map(w=>'<div class="msg warn">'+esc(w)+'</div>').join('');
   };
   set();d.el.addEventListener('input',upd);d.el.addEventListener('change',upd);upd();
   d.$('#aX').onclick=d.close;d.$('#aCopy').onclick=()=>copyText(d.$('#aCode'));
@@ -539,14 +624,15 @@ function exportDialog(){
 function helpDialog(){
   const d=dlg('<h3>Pixel Font Editor – help</h3>'+
    '<p>Draw every character of a small bitmap font on a grid, check it in the <b>128×64 Arduboy preview</b>, and export it as a ready-to-use <code>.h</code> file.</p>'+
-   '<table class="help"><tr><td><b>Draw</b></td><td>Left click / drag draws, right click erases. Line, rectangle and fill tools are in the bar.</td></tr>'+
+   '<table class="help"><tr><td><b>Draw</b></td><td>Left click / drag paints with the left colour, right click with the right colour. Line, rectangle and fill tools are in the bar.</td></tr>'+
+   '<tr><td><b>Colours</b></td><td>Each pixel is <b>white</b>, <b>black</b> or <b>transparent</b> (checkerboard). Click a swatch to set the left colour, right-click it to set the right colour (default: white / transparent). The eraser paints transparent.</td></tr>'+
    '<tr><td><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></td><td>Shift the pixels of the glyph (tick “all glyphs” to shift the whole font)</td></tr>'+
    '<tr><td><kbd>Alt</kbd>+<kbd>←</kbd><kbd>→</kbd></td><td>Previous / next glyph (<kbd>Alt</kbd>+<kbd>↑</kbd><kbd>↓</kbd> jumps 16)</td></tr>'+
-   '<tr><td>any key</td><td>Typing a character selects that glyph</td></tr>'+
-   '<tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd></td><td>Undo / redo</td></tr><tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>V</kbd></td><td>Copy / paste glyph</td></tr><tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save project (.atmfont)</td></tr></table>'+
+   '<tr><td><kbd>B</kbd> <kbd>E</kbd> <kbd>L</kbd> <kbd>R</kbd> <kbd>O</kbd> <kbd>G</kbd> <kbd>I</kbd> <kbd>M</kbd> <kbd>U</kbd> <kbd>C</kbd></td><td>pencil, eraser, line, rectangle, ellipse, fill, picker, select, cut &amp; drag, copy &amp; drag (the same keys as in the sprite editor)</td></tr><tr><td><kbd>X</kbd></td><td>swap the left / right colour</td></tr><tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>previous / next glyph</td></tr><tr><td><kbd>Del</kbd> <kbd>Esc</kbd></td><td>clear the selection / deselect</td></tr><tr><td><kbd>Shift</kbd>+letter</td><td>Selects that letter’s glyph (capital; if the font has none, the lower case one). Digits and symbols select their glyph directly. For a lower case glyph in a font that also has capitals, click it.</td></tr>'+
+   '<tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd></td><td>Undo / redo</td></tr><tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd></td><td>Copy, cut, paste. Without a selection, copy / paste works on the whole glyph. With the Cut or Copy tool: select an area, then press inside it and drag; the pixels land where you let go.</td></tr><tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save project (.atmfont)</td></tr></table>'+
    '<h3 style="margin-top:14px">Advance width</h3><p>The red line is where the glyph ends. With <b>Proportional</b> on, text uses each glyph’s advance width (use <i>Trim</i> to set it from the ink); otherwise every character is as wide as the cell.</p>'+
-   '<h3>Import</h3><ul><li><b>.h</b> – any Arduboy sprite array (<code>width, height, frames…</code>). Choose “sprite sheet” (one frame per glyph) or “column frames” like the ID-20 font. Fonts exported by this editor are recognised automatically.</li><li><b>PNG / JPG / GIF</b> – a sheet cut into equal cells (a file called <code>name_5x7.png</code> sets the cell size).</li><li><b>TTF / OTF / WOFF</b> – rasterised at the pixel size you choose.</li><li><b>.atmfont</b> – the project file.</li></ul>'+
-   '<h3>Export for Arduboy</h3><ul><li><b>Sprite sheet</b> – one standard Sprites frame per glyph: <code>Sprites::drawSelfMasked(x, y, font, c - FONT_FIRST)</code>.</li><li><b>Column frames (ID-20 style)</b> – the font is a sprite sheet of <i>one-pixel-wide</i> frames. A 3×5 glyph costs only 3 bytes, blank glyphs share a single blank frame, and with the optional <i>charBox</i> a message is converted to frame numbers once, so drawing and scrolling it is cheap.</li><li><b>Proportional</b> adds a width table (4 bits per glyph when all widths ≤ 15).</li><li>Use “only these characters” to keep just the glyphs your game needs.</li></ul>'+
+   '<h3>Import</h3><ul><li><b>.h</b> – any Arduboy sprite array (<code>width, height, frames…</code>), optionally with its <code>_mask</code> or <code>_plus_mask</code> data. Choose “sprite sheet” (one frame per glyph) or “column frames” like the ID-20 font. Fonts exported by this editor are recognised automatically.</li><li><b>PNG / JPG / GIF</b> – a sheet (white, black and transparent pixels, or dark letters on white) cut into equal cells (a file called <code>name_5x7.png</code> sets the cell size).</li><li><b>TTF / OTF / WOFF</b> – rasterised at the pixel size you choose.</li><li><b>.atmfont</b> – the project file.</li></ul>'+
+   '<h3>Export for Arduboy</h3><ul><li><b>Sprite sheet</b> – one standard Sprites frame per glyph: <code>Sprites::drawSelfMasked(x, y, font, c - FONT_FIRST)</code>.</li><li><b>Column frames (ID-20 style)</b> – the font is a sprite sheet of <i>one-pixel-wide</i> frames. A 3×5 glyph costs only 3 bytes, blank glyphs share a single blank frame, and with the optional <i>charBox</i> a message is converted to frame numbers once, so drawing and scrolling it is cheap.</li><li><b>Mask</b>: “None” keeps only the white pixels (<code>drawSelfMasked</code>). To draw the black pixels as well, pick a separate mask array (<code>drawExternalMask</code>) or interleaved sprite + mask (<code>drawPlusMask</code>). Black pixels turn on automatically when the font has any.</li><li><b>Proportional</b> adds a width table (4 bits per glyph when all widths ≤ 15).</li><li>Use “only these characters” to keep just the glyphs your game needs.</li></ul>'+
    '<p class="hint">Arduboy’s Sprites library has an 8-bit frame number, so a column font can hold at most 255 columns.</p>'+
    '<p class="hint">Made by TEAM a.r.g. – if this tool helps you, consider buying us a coffee ☕</p><div class="dfoot"><button class="play" id="hX">Close</button></div>');
   d.$('#hX').onclick=d.close;
@@ -571,15 +657,26 @@ addEventListener('dragleave',()=>{dc=Math.max(0,dc-1);if(!dc)drop.style.display=
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();dc=0;drop.style.display='none';const f=e.dataTransfer.files[0];if(f)importFile(f)});
 addEventListener('keydown',e=>{
-  const mod=e.ctrlKey||e.metaKey,tg=e.target.tagName,typing=tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT';
+  const mod=e.ctrlKey||e.metaKey,tg=e.target.tagName,typing=(tg==='INPUT'&&!['checkbox','range','radio','button'].includes(e.target.type))||tg==='TEXTAREA'||tg==='SELECT';
   if(e.key==='Escape'){const m=document.querySelector('.modal:last-of-type');if(m){m.remove();return}}
   if(document.querySelector('.modal'))return;
   if(mod&&e.key.toLowerCase()==='s'){e.preventDefault();saveProject();return}
   if(typing)return;
-  if(mod){const k=e.key.toLowerCase();if(k==='z'){e.preventDefault();e.shiftKey?redo():undo()}else if(k==='y'){e.preventDefault();redo()}else if(k==='c'){e.preventDefault();copyG()}else if(k==='v'){e.preventDefault();pasteG()}return}
+  if(mod){const k=e.key.toLowerCase();if(k==='z'){e.preventDefault();e.shiftKey?redo():undo()}else if(k==='y'){e.preventDefault();redo()}else if(k==='c'){e.preventDefault();copySel()}else if(k==='x'){if(selRect){e.preventDefault();cutSel()}}else if(k==='v'){e.preventDefault();pasteClip()}return}
   if(e.altKey&&e.key.startsWith('Arrow')){e.preventDefault();selectGlyph(sel+({ArrowLeft:-1,ArrowRight:1,ArrowUp:-16,ArrowDown:16}[e.key]));return}
   if(e.key.startsWith('Arrow')){e.preventDefault();const m={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];shift(m[0],m[1]);return}
-  if(e.key.length===1&&!e.altKey){const c=e.key.charCodeAt(0);let t=c;if(!(t>=F.first&&t<=F.last)&&e.key.toUpperCase()!==e.key)t=e.key.toUpperCase().charCodeAt(0);if(t>=F.first&&t<=F.last){e.preventDefault();selectGlyph(t)}}
+  const lk=e.key.toLowerCase();
+  if(!e.shiftKey&&!e.altKey){
+    const TK={b:'pencil',e:'eraser',l:'line',r:'rect',o:'ellipse',g:'fill',i:'pick',m:'select',u:'cut',c:'copy'};
+    if(TK[lk]){e.preventDefault();setTool(TK[lk]);return}
+    if(lk==='x'){e.preventDefault();[c1,c2]=[c2,c1];renderSw();return}
+  }
+  if(e.key==='Delete'||e.key==='Backspace'){if(selRect){e.preventDefault();delSel()}return}
+  if(e.key==='Escape'){selRect=null;drawMain();return}
+  if(e.key==='['||e.key===']'){e.preventDefault();selectGlyph(sel+(e.key===']'?1:-1));return}
+  if(e.key.length===1&&!e.altKey){const k=e.key;let t=k.charCodeAt(0);
+    if(/[a-z]/i.test(k)){if(!e.shiftKey)return;const u=k.toUpperCase().charCodeAt(0),l=k.toLowerCase().charCodeAt(0);t=(u>=F.first&&u<=F.last)?u:l}   // letters need Shift
+    if(t>=F.first&&t<=F.last){e.preventDefault();selectGlyph(t)}}
 });
 addEventListener('beforeunload',autosave);
 
